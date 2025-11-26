@@ -30,3 +30,44 @@ document.querySelectorAll('.faq-question').forEach(question => {
     faqItem.classList.toggle('active');
   });
 });
+
+
+// =============================
+// POPUP AUTO-OPEN
+// =============================
+
+window.addEventListener("load", () => {
+  setTimeout(() => {
+    document.getElementById("popup").classList.add("active");
+  }, 800); // Se abre 0.8s después de cargar
+});
+
+document.querySelector(".popup-close").addEventListener("click", () => {
+  document.getElementById("popup").classList.remove("active");
+});
+
+
+// ===================================
+// WIDGET: aparece si el popup se cierra
+// ===================================
+
+const popup = document.getElementById("popup");
+const closeBtn = document.querySelector(".popup-close");
+const widget = document.getElementById("guide-widget");
+
+closeBtn.addEventListener("click", () => {
+  popup.classList.remove("active");
+
+  // Espera 300ms para que el cierre se vea más natural
+  setTimeout(() => {
+    widget.classList.add("active");
+  }, 300);
+});
+
+// Acción al hacer clic → WhatsApp
+widget.addEventListener("click", () => {
+  window.open(
+    "https://wa.me/573019569941?text=Hola%20Orlando%2C%20quisiera%20obtener%20la%20gu%C3%ADa%20y%20la%20clase%2C%20%C2%BFpor%20cu%C3%A1l%20medio%20te%20pago%3F",
+    "_blank"
+  );
+});

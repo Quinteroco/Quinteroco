@@ -1,3 +1,165 @@
+/* =============================
+   POPUP PROMO
+============================= */
+
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .35s ease;
+}
+
+.popup-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.popup-box {
+  background: #0A0A0A;
+  padding: 40px 30px;
+  max-width: 380px;
+  width: 90%;
+  border-radius: 22px;
+  text-align: center;
+  position: relative;
+  animation: fadeInUp .6s ease;
+  border: 1px solid rgba(0,174,239,0.4);
+  box-shadow: 0 18px 50px rgba(0,174,239,0.15);
+}
+/* Glow externo */
+.popup-box::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #00AEEF, #FECF00);
+  filter: blur(10px);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Línea interna */
+.popup-box::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 2px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #00AEEF, #FECF00);
+  -webkit-mask: 
+      linear-gradient(#fff 0 0) content-box, 
+      linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+
+.popup-emoji {
+  font-size: 70px;
+  margin-bottom: 10px;
+  animation: float 3s ease-in-out infinite;
+}
+
+.popup-title {
+  font-size: 24px;
+  font-weight: 800;
+  margin-bottom: 10px;
+  color: #ffffff;
+}
+
+.popup-text {
+  font-size: 16px;
+  line-height: 1.6;
+  margin-bottom: 12px;
+  color: #ffffff;
+}
+
+.popup-price {
+  font-size: 18px;
+  font-weight: 700;
+  color: #00AEEF;
+  margin-bottom: 25px;
+}
+
+.popup-btn {
+  display: inline-block;
+  background: linear-gradient(135deg, #00AEEF, #0096D1);
+  color: white;
+  padding: 16px 26px;
+  font-size: 17px;
+  font-weight: 700;
+  border-radius: 40px;
+  text-decoration: none;
+  transition: 0.25s ease;
+  box-shadow: 0 8px 26px rgba(0, 174, 239, 0.4);
+}
+
+.popup-btn:hover {
+  transform: scale(1.05);
+}
+
+.popup-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: transparent;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  opacity: 0.6;
+  color: #fff;
+  text-shadow: 0 0 6px rgba(255,255,255,0.5);
+}
+
+.popup-close:hover {
+  opacity: 1;
+}
+
+/* BADGE PRICE */
+.badge-price {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  background: linear-gradient(135deg, #00AEEF15, #0096D115);
+  border: 1px solid rgba(0, 174, 239, 0.4);
+  padding: 14px 20px;
+  border-radius: 16px;
+  margin-bottom: 25px;
+  box-shadow: 0 8px 20px rgba(0, 174, 239, 0.18);
+  animation: fadeInUp .6s ease;
+}
+
+.badge-icon {
+  font-size: 26px;
+  margin-bottom: 4px;
+}
+
+.badge-text {
+  font-size: 22px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #00AEEF, #FECF00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.badge-sub {
+  font-size: 14px;
+  color: #ffffff;
+  margin-top: 4px;
+  opacity: 0.8;
+}
+
+
 /* =========================================================================
    1. BASE STYLES & RESET
    ========================================================================= */
@@ -860,4 +1022,69 @@ section {
   .section-title {
     font-size: 34px;
   }
+}
+
+/* =============================
+   WIDGET FLOTANTE CON BORDE GRADIENTE
+============================= */
+
+.guide-widget {
+  position: fixed;
+  bottom: 22px;
+  left: 22px;
+  background: #0A0A0A;
+  padding: 14px 20px;
+  border-radius: 50px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: white;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+
+  /* Animación de entrada */
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(15px);
+  transition: opacity .35s ease, transform .35s ease;
+
+  /* Para asegurar que el borde gradiente quede afuera */
+  position: fixed;
+  z-index: 999999;
+}
+
+/* Borde gradiente alrededor */
+.guide-widget::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 2px;
+  border-radius: 50px;
+  background: linear-gradient(135deg, #00AEEF, #FECF00);
+  -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Activador */
+.guide-widget.active {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+/* Icono animado */
+.widget-icon {
+  font-size: 26px;
+  animation: wiggle 1.5s infinite ease-in-out;
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-10deg); }
+  75% { transform: rotate(10deg); }
 }

@@ -6,24 +6,6 @@
   <title>Bootcamp Digital Montería</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
-
-  <!-- Meta Pixel Code -->
-  <script>
-  !function(f,b,e,v,n,t,s)
-  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-  n.queue=[];t=b.createElement(e);t.async=!0;
-  t.src=v;s=b.getElementsByTagName(e)[0];
-  s.parentNode.insertBefore(t,s)}(window, document,'script',
-  'https://connect.facebook.net/en_US/fbevents.js');
-  fbq('init', '2561234364250032');
-  fbq('track', 'PageView');
-  </script>
-  <noscript><img height="1" width="1" style="display:none"
-  src="https://www.facebook.com/tr?id=2561234364250032&ev=PageView&noscript=1"
-  /></noscript>
-  <!-- End Meta Pixel Code -->
 </head>
 <body>
   <main>
@@ -34,6 +16,43 @@
 " class="nav-cta">Inscribirme</a>
     </header>
 
+<!-- POPUP PROMO ESPECIAL -->
+<div id="popup" class="popup-overlay">
+  <div class="popup-box">
+    
+    <div class="popup-emoji">📘</div>
+
+    <h3 class="popup-title">Guía completa + Clase personalizada</h3>
+    <p class="popup-text">
+      Obtén una guía profesional que te enseña los concoimientos básicos y pasos que debes dar para ganar en dólares desde tu casa<br><br>
+      Incluye una clase perosnalizada <strong>GRATIS</strong>.
+    </p>
+
+    <div class="popup-price badge-price">
+      <span class="badge-icon">💎</span>
+      <span class="badge-text"><strong>$35.000 COP</strong></span>
+      <span class="badge-sub">Presencial o virtual</span>
+    </div>
+
+    <a 
+      href="https://wa.me/573019569941?text=Hola%20Orlando%2C%20quisiera%20obtener%20la%20gu%C3%ADa%20y%20la%20clase%2C%20%C2%BFpor%20cu%C3%A1l%20medio%20te%20pago%3F"
+      class="popup-btn"
+    >
+      ¡Quiero la guía!
+    </a>
+
+    <button class="popup-close">✖</button>
+  </div>
+</div>
+
+
+<!-- WIDGET LIBRO -->
+<div id="guide-widget" class="guide-widget">
+  <div class="widget-icon">📘</div>
+  <div class="widget-text">Obtén tu guía aquí</div>
+</div>
+
+<!-- HERO -->
 
 <section class="hero">
   <div class="particles">
@@ -223,6 +242,4 @@
 
   <script src="script.js"></script>
 </body>
-
 </html>
-
