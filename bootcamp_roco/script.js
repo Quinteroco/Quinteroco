@@ -70,6 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         await fetch("https://script.google.com/macros/s/AKfycbzke1VPPxlvrTpYf1XO-dwmjgkTGdkbvbQwGJUztRBLOmngRGvq6X-BV6mstJkY3jCu/exec", {
           method: "POST",
+          mode: "no-cors",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data)
         });
@@ -84,3 +85,4 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
 }); // end DOMContentLoaded
+
