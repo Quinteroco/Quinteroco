@@ -73,59 +73,56 @@
       </div>
 
       <!-- FORMULARIO -->
-      <div class="hero-right" id="form">
-        <form id="contact-form">
-          <h2>Déjame tus datos para contactarte</h2>
-          <p>Así podré conocerte mejor y ofrecerte un plan de pago ideal para ti</p>
+<div class="hero-right" id="form">
+  <form id="contact-form" action="https://script.google.com/macros/s/AKfycbzke1VPPxlvrTpYf1XO-dwmjgkTGdkbvbQwGJUztRBLOmngRGvq6X-BV6mstJkY3jCu/exec" method="POST" target="hidden_iframe">
+    <h2>Déjame tus datos para contactarte</h2>
+    <p>Así podré conocerte mejor y ofrecerte un plan de pago ideal para ti</p>
 
-          <!-- Nombre -->
-          <label for="name">Nombre completo</label>
-          <input 
-            type="text"
-            id="name"
-            name="name"
-            required
-            pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ ]{2,50}"
-            placeholder="Tu nombre"
-          />
+    <label for="name">Nombre completo</label>
+    <input 
+      type="text"
+      id="name"
+      name="name"
+      required
+      pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ ]{2,50}"
+      placeholder="Tu nombre"
+    />
 
-          <!-- WhatsApp -->
-          <label for="whatsapp">WhatsApp</label>
-          <input 
-            type="tel"
-            id="whatsapp"
-            name="whatsapp"
-            required
-            pattern="[0-9]{8,15}"
-            placeholder="Ej: 3001234567"
-          />
+    <label for="whatsapp">WhatsApp</label>
+    <input 
+      type="tel"
+      id="whatsapp"
+      name="whatsapp"
+      required
+      pattern="[0-9]{8,15}"
+      placeholder="Ej: 3001234567"
+    />
 
-          <!-- Correo -->
-          <label for="email">Correo electrónico</label>
-          <input 
-            type="email"
-            id="email"
-            name="email"
-            required
-            placeholder="correo@ejemplo.com"
-          />
+    <label for="email">Correo electrónico</label>
+    <input 
+      type="email"
+      id="email"
+      name="email"
+      required
+      placeholder="correo@ejemplo.com"
+    />
 
-          <!-- Edad -->
-          <label for="age">Edad</label>
-          <input 
-            type="number"
-            id="age"
-            name="age"
-            required
-            min="15"
-            max="99"
-            placeholder="Tu edad"
-          />
+    <label for="age">Edad</label>
+    <input 
+      type="number"
+      id="age"
+      name="age"
+      required
+      min="15"
+      max="99"
+      placeholder="Tu edad"
+    />
 
-          <button type="submit">Enviar datos</button>
-        </form>
-      </div>
-
+    <button type="submit">Enviar datos</button>
+  </form>
+    <!-- iframe oculto para evitar que la página recargue -->
+  <iframe name="hidden_iframe" style="display:none;"></iframe>
+    </div>
     </div>
   </div>
 
@@ -314,4 +311,5 @@
 
   <script src="script.js"></script>
 </body>
+
 </html>
