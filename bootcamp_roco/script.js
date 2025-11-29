@@ -39,47 +39,35 @@ document.addEventListener("DOMContentLoaded", () => {
   function openPopup() { if (popup) popup.classList.add("active"); }
   function closePopup() { if (popup) popup.classList.remove("active"); }
 
-  // cerrar popup al clic en botón(s)
   document.querySelectorAll('#social-popup button').forEach(btn => {
     btn.addEventListener('click', closePopup);
   });
-  // cerrar popup si clic fuera del contenido
+
   if (popup) {
     popup.addEventListener('click', (e) => { if (e.target === popup) closePopup(); });
   }
 
-  // --- Form submit: enviar a Google Sheets y abrir popup ---
- const form = document.getElementById("contact-form");
-if (form) {
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
+  // --- Form submit: abrir popup y resetear ---
+  const form = document.getElementById("contact-form");
+  if (form) {
+    form.addEventListener("submit", (e) => {
+      // No preventDefault para que el form se envíe nativamente y evite CORS
+      
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        e.preventDefault();
+        return;
+      }
 
-    if (!form.checkValidity()) {
-      form.reportValidity();
-      return;
-    }
+      // Espera que el form se envíe a la URL del action en el iframe oculto
 
-    const data = {
-      name: form.name.value,
-      whatsapp: form.whatsapp.value,
-      email: form.email.value,
-      age: form.age.value
-    };
-
-    try {
-      await fetch("https://script.google.com/macros/s/AKfycbzke1VPPxlvrTpYf1XO-dwmjgkTGdkbvbQwGJUztRBLOmngRGvq6X-BV6mstJkY3jCu/exec", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams(data)
-      });
-    } catch (err) {
-      console.error("Error enviando a Sheets:", err);
-    }
-
-    openPopup();
-    form.reset();
-  });
-}
+      // Solo abre el popup y limpia el form después de un pequeño delay
+      setTimeout(() => {
+        openPopup();
+        form.reset();
+      }, 500);
+    });
+  }
 
 }); // end DOMContentLoaded
 
