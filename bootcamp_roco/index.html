@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bootcamp Digital</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main>
+
+<header class="top-nav">
+  <a href="https://quinteroco.com/" class="nav-logo">ROCO</a>
+<a href="#" onclick="scrollToForm()" class="cta-button">Inscribirme</a>
+</header>
+
+<!-- POPUP PROMO ESPECIAL -->
+<!-- <div id="popup" class="popup-overlay">
+  <div class="popup-box">
+    
+    <div class="popup-emoji">📘</div>
+
+    <h3 class="popup-title">Guía completa + Clase personalizada</h3>
+    <p class="popup-text">
+      Obtén una guía profesional que te enseña los concoimientos básicos y pasos que debes dar para ganar en dólares desde tu casa<br><br>
+      Incluye una clase perosnalizada <strong>GRATIS</strong>.
+    </p>
+
+    <div class="popup-price badge-price">
+      <span class="badge-icon">💎</span>
+      <span class="badge-text"><strong>$35.000 COP</strong></span>
+      <span class="badge-sub">Presencial o virtual</span>
+    </div>
+
+    <a 
+      href="https://wa.me/573019569941?text=Hola%20Orlando%2C%20quisiera%20obtener%20la%20gu%C3%ADa%20y%20la%20clase%2C%20%C2%BFpor%20cu%C3%A1l%20medio%20te%20pago%3F"
+      class="popup-btn"
+    >
+      ¡Quiero la guía!
+    </a>
+
+    <button class="popup-close">✖</button>
+  </div>
+</div> -->
+
+
+<!-- WIDGET LIBRO -->
+<!-- <div id="guide-widget" class="guide-widget">
+  <div class="widget-icon">📘</div>
+  <div class="widget-text">Obtén tu guía aquí</div>
+</div> -->
+
+<!-- HERO -->
+
+<section class="hero">
+
+  <div class="hero-content">
+
+    <div class="hero-layout">
+
+      <!-- TEXTO DEL HERO -->
+      <div class="hero-left">
+        <h1>Bootcamp Digital</h1>
+        <p class="hero-subtitle">
+          La tecnología solo parece complicada hasta que alguien te la enseña bien.<br><br>
+          Domínala, construye proyectos reales y abre la puerta a ingresos en dólares.
+        </p>
+
+        <div class="hero-footer">
+          Bootcamp completo • Solo 300.000 COP • Ganas desde $2,000 USD/mes
+        </div>
+      </div>
+
+      <!-- FORMULARIO -->
+      <div class="hero-right" id="form">
+        <form id="contact-form">
+          <h2>Déjame tus datos para contactarte</h2>
+          <p>Así podré conocerte mejor y ofrecerte un plan de pago ideal para ti</p>
+
+          <!-- Nombre -->
+          <label for="name">Nombre completo</label>
+          <input 
+            type="text"
+            id="name"
+            name="name"
+            required
+            pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ ]{2,50}"
+            placeholder="Tu nombre"
+          />
+
+          <!-- WhatsApp -->
+          <label for="whatsapp">WhatsApp</label>
+          <input 
+            type="tel"
+            id="whatsapp"
+            name="whatsapp"
+            required
+            pattern="[0-9]{8,15}"
+            placeholder="Ej: 3001234567"
+          />
+
+          <!-- Correo -->
+          <label for="email">Correo electrónico</label>
+          <input 
+            type="email"
+            id="email"
+            name="email"
+            required
+            placeholder="correo@ejemplo.com"
+          />
+
+          <!-- Edad -->
+          <label for="age">Edad</label>
+          <input 
+            type="number"
+            id="age"
+            name="age"
+            required
+            min="15"
+            max="99"
+            placeholder="Tu edad"
+          />
+
+          <button type="submit">Enviar datos</button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+</section>
+<!-- HERO -->
+
+<!-- WIDGET -->
+
+<div class="inscribe-widget" onclick="scrollToForm()">
+  ¡Inscríbete!
+</div>
+<!-- WIDGET -->
+
+<!-- POPUP REDES -->
+<div id="social-popup">
+  <div class="popup-box">
+    <h3 class="popup-title">¡Gracias por inscribirte!</h3>
+    <p>Sígueme en mis redes:</p>
+
+    <button class="popup-social-btn instagram" onclick="window.open('https://www.instagram.com/quinte_roco/', '_blank')">
+      <svg viewBox="0 0 24 24">
+        <path d="M7 2C4.2 2 2 4.2 2 7v10c0 2.8 2.2 5 5 5h10c2.8 0 5-2.2 5-5V7c0-2.8-2.2-5-5-5H7zm10 2c1.7 0 3 1.3 3 3v10c0 1.7-1.3 3-3 3H7c-1.7 0-3-1.3-3-3V7c0-1.7 1.3-3 3-3h10zm-5 3.2A4.8 4.8 0 1016.8 12 4.8 4.8 0 0012 7.2zm0 2A2.8 2.8 0 1114.8 12 2.8 2.8 0 0112 9.2zm4.9-3.8a1.1 1.1 0 11-1.1 1.1 1.1 1.1 0 011.1-1.1z"/>
+      </svg>
+      <span>Instagram</span>
+    </button>
+
+    <button class="popup-social-btn linkedin" onclick="window.open('https://www.linkedin.com/in/quinteroco/', '_blank')">
+      <svg viewBox="0 0 24 24">
+        <path d="M4.98 3.5A2.5 2.5 0 112.5 6a2.5 2.5 0 012.48-2.5zM2.4 8.4h5.2v13.2H2.4zm7.6 0h5v1.8h.1a5.5 5.5 0 015-2.7c5.3 0 6.3 3.5 6.3 8v9H21v-8.4c0-2-.1-4.6-3-4.6-3 0-3.5 2.2-3.5 4.4v8.6H10z"/>
+      </svg>
+      <span>LinkedIn</span>
+    </button>
+
+    <button class="popup-social-btn close" onclick="closePopup()">
+      Cerrar
+    </button>
+
+  </div>
+</div>
+<!-- POPUP REDES -->
+
+
+<!-- BENEFICIOS -->
+
+    <div class="benefits-bar">
+        <span>👨‍🏫 Mentoría personalizada</span>
+        <span>💼 Enfoque 100% práctico</span>
+        <span>🏙️ Hecho para talento de Montería</span>
+    </div>
+
+    <section id="oferta">
+      <div class="offer-box">
+        <h2 class="section-title" style="color:white;">¿Qué incluye el bootcamp?</h2>
+        <ul class="offer-list">
+          <li>Clases en vivo o presenciales</li>
+          <li>Ejercicios reales de proyectos</li>
+          <li>Guía para aplicar a trabajos digitales</li>
+          <li>Acompañamiento directo</li>
+        </ul>
+        <a href="#" onclick="scrollToForm()" class="cta-button">Inscribirme</a>
+      </div>
+    </section>
+
+    <section id="precio">
+        <h2 class="section-title">Inversión</h2>
+
+        <div class="pricing-box">
+            <div class="pricing-header">
+                <span class="pricing-icon">💰</span>
+                <p class="precio">Inscripción</p>
+            </div>
+
+            <p class="precio-valor"><strong>$300.000 COP</strong></p>
+
+            <a href="#" onclick="scrollToForm()" 
+            class="cta-button pago-button" target="_blank" rel="noopener noreferrer">
+            Inscribirme
+            </a>
+        </div>
+    </section>
+
+    <section id="aprender">
+      <h2 class="section-title">Lo que vas a aprender</h2>
+      <div class="learning-grid">
+        <div class="learning-item">
+          <div class="learning-icon">📘</div>
+          <p class="learning-text">Bases de Project Management</p>
+        </div>
+        <div class="learning-item">
+          <div class="learning-icon">💻</div>
+          <p class="learning-text">Cómo trabajar remoto en tecnología</p>
+        </div>
+        <div class="learning-item">
+          <div class="learning-icon">🚀</div>
+          <p class="learning-text">Volver realidad tu primer proyecto digital</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="publico">
+        <h2 class="section-title">¿Para quién es este bootcamp?</h2>
+        <div class="publico-grid">
+            <div class="publico-item">📚 Estudiantes que quieren entrar a tecnología</div>
+            <div class="publico-item">💼 Personas buscando trabajo remoto</div>
+            <div class="publico-item">🚀 Emprendedores que quieren crear negocios digitales</div>
+            <div class="publico-item">🔄 Profesionales que quieren cambiar de carrera</div>
+        </div>
+    </section>
+
+
+    <section id="precio-final">
+        <h2 class="section-title">Inversión</h2>
+
+        <div class="pricing-box">
+            <div class="pricing-header">
+                <span class="pricing-icon">💰</span>
+                <p class="precio">Inscripción</p>
+            </div>
+
+            <p class="precio-valor"><strong>$300.000 COP</strong></p>
+
+            <a href="#" onclick="scrollToForm()" 
+            class="cta-button pago-button" target="_blank" rel="noopener noreferrer">
+            Inscribirme
+            </a>
+        </div>
+    </section>
+
+    <section id="preguntas" class="faq-section">
+      <h2 class="section-title">¿Tienes dudas?</h2>
+      <div class="faq-item">
+        <h3 class="faq-question">¿Cuánto demora el bootcamp?</h3>
+        <p class="faq-answer">Es una (1) sesión semanal de 2 horas durante 3 meses.</p>
+      </div>
+      <div class="faq-item">
+        <h3 class="faq-question">¿Es presencial?</h3>
+        <p class="faq-answer">Idealmente sí, pero si los horarios o ubicaciones no coinciden podemos agendar sesiones virtuales.</p>
+      </div>
+      <div class="faq-item">
+        <h3 class="faq-question">¿Debo saber algo de desarrollo o marketing?</h3>
+        <p class="faq-answer">No, en la primera sesión haremos un test para entender en qué nivel estás y personalizar el plan de trabajo.</p>
+      </div>
+      <div class="faq-item">
+        <h3 class="faq-question">¿Qué debo esperar al final del bootcamp?</h3>
+        <p class="faq-answer">Vas a poder llevar un proyecto desde la ideación hasta la implementación y optimización constante genernado ganancias</p>
+      </div>
+      <div class="faq-item">
+        <h3 class="faq-question">¿Qué aprenderé?</h3>
+        <p class="faq-answer">Aprenderás cómo desarrollar profesionalmente proyectos y habilidades para conseguir un trabajo en tecnología.</p>
+      </div>
+      <div class="faq-item">
+        <h3 class="faq-question">¿A qué me debo comprometer?</h3>
+        <p class="faq-answer">A aplicar lo que aprendes y avanzar por tu cuenta después de cada sesión. Yo te doy el conocimiento y la guía, pero si no avanzas, no lograrás nada.</p>
+      </div>
+    </section>
+
+
+    <section id="sobre-mi">
+      <div class="about-section">
+       <div class="about-image" style="background-image: url('./assets/foto_roco.png');"></div>
+       <div class="about-content">
+         <h3 class="about-name">Orlando</h3>
+          <p class="about-text">
+            Llevo años trabajando en tecnología, dirigiendo equipos, creando productos y ayudando a empresas a crecer digitalmente.<br><br>Ahora  quiero formar talento para trabajar juntos.</br>
+          </p>
+          <div class="expertise-tags">
+            <span class="tag">Project Management</span>
+            <span class="tag">Estrategia Digital</span>
+            <span class="tag">Scrum</span>
+            <span class="tag">Negocios Online</span>
+          </div>
+
+          <a href="http://quinteroco.com/portfolio_roco/" class="cta-button about-cta">Conoce mi experiencia</a>
+       </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+        <p>ROCO • Bootcamp Digital</p>
+        <p>© 2025 - Todos los derechos reservados</p>
+    </footer>
+
+</section>
+
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
