@@ -67,13 +67,6 @@ document.addEventListener("DOMContentLoaded", () => {
         age: form.age.value
       };
 
-      try {
-        await fetch("https://script.google.com/macros/s/AKfycbzke1VPPxlvrTpYf1XO-dwmjgkTGdkbvbQwGJUztRBLOmngRGvq6X-BV6mstJkY3jCu/exec", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data)
-        });
-
       } catch (err) {
         console.error("Error enviando a Sheets:", err);
       }
@@ -84,5 +77,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
 }); // end DOMContentLoaded
+
 
 
