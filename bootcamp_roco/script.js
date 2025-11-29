@@ -49,34 +49,40 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // --- Form submit: enviar a Google Sheets y abrir popup ---
-  const form = document.getElementById("contact-form");
-  if (form) {
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
+ const form = document.getElementById("contact-form");
+if (form) {
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-      // validación nativa
-      if (!form.checkValidity()) {
-        form.reportValidity();
-        return;
-      }
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
 
-      const data = {
-        name: form.name.value,
-        whatsapp: form.whatsapp.value,
-        email: form.email.value,
-        age: form.age.value
-      };
+    const data = {
+      name: form.name.value,
+      whatsapp: form.whatsapp.value,
+      email: form.email.value,
+      age: form.age.value
+    };
 
-      } catch (err) {
-        console.error("Error enviando a Sheets:", err);
-      }
+    try {
+      await fetch("https://script.google.com/macros/s/AKfycbzke1VPPxlvrTpYf1XO-dwmjgkTGdkbvbQwGJUztRBLOmngRGvq6X-BV6mstJkY3jCu/exec", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams(data)
+      });
+    } catch (err) {
+      console.error("Error enviando a Sheets:", err);
+    }
 
-      openPopup();
-      form.reset();
-    });
-  }
+    openPopup();
+    form.reset();
+  });
+}
 
 }); // end DOMContentLoaded
+
 
 
 
