@@ -372,6 +372,7 @@ section {
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow-x: hidden !important;
 }
 
 /* Background effects */
@@ -1414,3 +1415,13 @@ section {
 }
 
 
+@media (max-width: 600px) {
+  .hero::before,
+  .hero::after {
+    width: 350px;
+    height: 350px;
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
