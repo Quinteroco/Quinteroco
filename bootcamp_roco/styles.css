@@ -272,10 +272,10 @@ section {
   margin: 0 0 70px 0;
   color: #fff;
   position: relative;
-  display: inline-block;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: fit-content;
 }
 
 .section-title::after {
@@ -1412,4 +1412,5 @@ section {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
 
