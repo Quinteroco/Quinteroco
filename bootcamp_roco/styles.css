@@ -1425,3 +1425,42 @@ section {
     transform: translateX(-50%);
   }
 }
+
+/* ==== FIX HERO MOBILE OVERFLOW ==== */
+@media (max-width: 900px) {
+
+  .hero-content {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  .hero-layout {
+    flex-direction: column !important;
+    gap: 20px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .hero-left {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .hero-right {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: none !important; /* elimina 420px fijos */
+  }
+
+  #contact-form {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .hero * {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+}
+
+
