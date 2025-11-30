@@ -58,9 +58,9 @@ document.addEventListener("DOMContentLoaded", () => {
         e.preventDefault();
         return;
       }
-
       // Espera que el form se envíe a la URL del action en el iframe oculto
-
+      // Evento de Meta (Lead)
+      fbq('track', 'Lead');
       // Solo abre el popup y limpia el form después de un pequeño delay
       setTimeout(() => {
         openPopup();
@@ -70,6 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
 }); // end DOMContentLoaded
+
 
 
 
