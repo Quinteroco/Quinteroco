@@ -506,19 +506,27 @@ section {
 
 /* Hero Footer (CÁPSULA RESTAURADA) */
 .hero-footer {
-    background: rgba(255, 255, 255, 0.05); /* Fondo gris */
-    border: 1px solid rgba(255, 255, 255, 0.1); /* Borde fino */
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 30px;
     padding: 12px 28px;
     color: #B8C5D0;
     font-weight: 600;
     font-size: 15px;
-    
-    margin: 0; 
+
+    margin: 0;
     opacity: 0;
     animation: fadeInUp 1s ease 0.6s forwards;
-    white-space: nowrap; 
+
+    white-space: normal;   /* <-- FIX */
+    text-align: center;    /* <-- ayuda en móvil */
+
+    max-width: 100%;       /* <-- evita scroll */
+    width: fit-content;    /* <-- mantiene estética */
+    margin-left: auto;
+    margin-right: auto;
 }
+
 
 /* ========= LAYOUT HERO + FORM ========= */
 
@@ -1462,5 +1470,6 @@ section {
     box-sizing: border-box !important;
   }
 }
+
 
 
