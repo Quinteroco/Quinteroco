@@ -20,7 +20,14 @@
     <!-- Preloader -->
     <div id="preloader">
         <div class="loader-container">
-            <div class="boat">🚢</div>
+            <div class="boat-svg-container">
+                <svg class="minimal-boat" viewBox="0 0 100 40" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10 30 L90 30 L85 15 L35 15 Z" fill="none" stroke="currentColor" stroke-width="2" />
+                    <path d="M30 15 L35 5 L65 5 L70 15" fill="none" stroke="currentColor" stroke-width="2" />
+                    <line x1="10" y1="30" x2="5" y2="25" stroke="currentColor" stroke-width="2" />
+                    <line x1="90" y1="30" x2="95" y2="25" stroke="currentColor" stroke-width="2" />
+                </svg>
+            </div>
             <div class="waves">
                 <div class="wave"></div>
                 <div class="wave"></div>
@@ -166,9 +173,38 @@
         <div class="modal-content glass success-content">
             <div class="success-icon">✓</div>
             <h2>¡Reserva Solicitada!</h2>
-            <p>Hemos recibido tus datos con éxito. Un asesor se pondrá en contacto contigo en breve.</p>
+            <p>Hemos recibido tus datos con éxito.</p>
             <div class="cta-container">
+                <button id="btn-show-roulette" class="btn-primary" style="margin-bottom: 15px;">🎁 ¡Gana un
+                    Descuento!</button>
                 <a href="https://wa.me/123456789" class="btn-cta">Contactar por WhatsApp</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Roulette Modal -->
+    <div id="roulette-modal" class="modal">
+        <div class="modal-content glass roulette-content">
+            <h2>Gira y Gana</h2>
+            <p>Prueba tu suerte para obtener un descuento exclusivo.</p>
+            <div class="roulette-container">
+                <div class="roulette-pointer">▼</div>
+                <div id="roulette-wheel" class="wheel">
+                    <div class="segment"><span>5%</span></div>
+                    <div class="segment highlight"><span>10%</span></div>
+                    <div class="segment"><span>15%</span></div>
+                    <div class="segment"><span>Sigue Participando</span></div>
+                    <div class="segment"><span>20%</span></div>
+                    <div class="segment"><span>10%</span></div>
+                    <div class="segment"><span>5%</span></div>
+                    <div class="segment"><span>Gratis</span></div>
+                </div>
+            </div>
+            <button id="btn-spin" class="btn-primary">GIRAR RULETA</button>
+            <div id="roulette-result" style="display: none;">
+                <h3 class="win-text">🎉 ¡FELICIDADES! 🎉</h3>
+                <p>Ganaste un <strong>10% OFF</strong> en tu reserva.</p>
+                <button id="btn-claim" class="btn-primary">Reclamar Bono</button>
             </div>
         </div>
     </div>

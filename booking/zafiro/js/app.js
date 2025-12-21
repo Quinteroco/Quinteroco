@@ -7,13 +7,15 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 preloader.style.display = 'none';
             }, 500);
-        }, 2000);
+        }, 1000); // Reduced to 1 second
     }
 
     const modal = document.getElementById('booking-modal');
     const successPopup = document.getElementById('success-popup');
     const summaryModal = document.getElementById('summary-modal');
+    const rouletteModal = document.getElementById('roulette-modal');
     const bookingBadge = document.getElementById('booking-badge');
+
     const closeBtns = document.querySelectorAll('.close-modal');
     const reserveBtns = document.querySelectorAll('.btn-reserve');
     const calendarInput = document.getElementById('calendar-input');
@@ -27,7 +29,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const stepDate = document.getElementById('step-date');
     const stepForm = document.getElementById('step-form');
     const timeSelection = document.getElementById('time-selection');
+
     const whatsappBtn = document.querySelector('.btn-cta');
+    const btnShowRoulette = document.getElementById('btn-show-roulette');
+    const btnSpin = document.getElementById('btn-spin');
+    const btnClaim = document.getElementById('btn-claim');
+    const wheel = document.getElementById('roulette-wheel');
+    const rouletteResult = document.getElementById('roulette-result');
+
     const whatsappFinalBtn = document.getElementById('whatsapp-final-btn');
     const reservationDetailsDiv = document.getElementById('reservation-details');
 
@@ -70,12 +79,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (event.target == modal) closeAllModals();
         if (event.target == successPopup) successPopup.style.display = 'none';
         if (event.target == summaryModal) summaryModal.style.display = 'none';
+        if (event.target == rouletteModal) rouletteModal.style.display = 'none';
     };
 
     function closeAllModals() {
         modal.style.display = 'none';
         successPopup.style.display = 'none';
         summaryModal.style.display = 'none';
+        rouletteModal.style.display = 'none';
         resetSteps();
     }
 
@@ -177,11 +188,46 @@ document.addEventListener('DOMContentLoaded', () => {
         const reservation = {
             ...lastReservationData,
             client: formData.get('name') || document.getElementById('name').value,
-            whatsapp: formData.get('whatsapp') || document.getElementById('whatsapp').value
+            whatsapp: formData.get('whatsapp') || document.getElementById('whatsapp').value,
+            discount: 0
         };
         localStorage.setItem('zafiro_booking', JSON.stringify(reservation));
         modal.style.display = 'none';
         successPopup.style.display = 'block';
+    });
+
+    // Roulette Logic
+    btnShowRoulette.addEventListener('click', () => {
+        successPopup.style.display = 'none';
+        rouletteModal.style.display = 'block';
+        wheel.style.transform = 'rotate(0deg)';
+        rouletteResult.style.display = 'none';
+        btnSpin.style.display = 'inline-block';
+    });
+
+    btnSpin.addEventListener('click', () => {
+        btnSpin.disabled = true;
+        // Segment 2 is our highlight (10%) and it's at 45deg in CSS.
+        // To bring 45deg to the top (0deg), we rotate the wheel by -45deg.
+        const rotations = 8;
+        const targetAngle = (rotations * 360) - 45;
+
+        wheel.style.transform = `rotate(${targetAngle}deg)`;
+
+        setTimeout(() => {
+            rouletteResult.style.display = 'block';
+            btnSpin.style.display = 'none';
+        }, 4000);
+    });
+
+    btnClaim.addEventListener('click', () => {
+        const data = JSON.parse(localStorage.getItem('zafiro_booking'));
+        if (data) {
+            data.discount = 0.10;
+            localStorage.setItem('zafiro_booking', JSON.stringify(data));
+        }
+        closeAllModals();
+        checkExistingBooking();
     });
 
     whatsappBtn.addEventListener('click', (e) => {
@@ -193,14 +239,19 @@ document.addEventListener('DOMContentLoaded', () => {
     bookingBadge.addEventListener('click', () => {
         const data = JSON.parse(localStorage.getItem('zafiro_booking'));
         if (data) {
+            const discountAmount = data.total * (data.discount || 0);
+            const finalTotal = data.total - discountAmount;
+
             reservationDetailsDiv.innerHTML = `
                 <p><strong>Servicio:</strong> ${data.service}</p>
-                <p><strong>Costo:</strong> $${data.total.toLocaleString()}</p>
+                <p><strong>Subtotal:</strong> $${data.total.toLocaleString()}</p>
+                ${data.discount ? `<p><strong>Descuento (10%):</strong> -$${discountAmount.toLocaleString()}</p>` : ''}
+                <p><strong>Total Final:</strong> $${finalTotal.toLocaleString()}</p>
                 <p><strong>Detalle:</strong> ${data.type === 'full'
                     ? data.dates.map(d => new Date(d).toLocaleDateString()).join(' - ')
                     : `${new Date(data.date).toLocaleDateString()} de ${data.startTime} a ${data.endTime}`}</p>
             `;
-            const msg = encodeURIComponent(`Hola Zafiro Marine, tengo una reserva para ${data.service}. Mi nombre es ${data.client}.`);
+            const msg = encodeURIComponent(`Hola Zafiro Marine, tengo una reserva para ${data.service} con un descuento del 10%. Mi nombre es ${data.client}.`);
             whatsappFinalBtn.href = `https://wa.me/573000000000?text=${msg}`;
             summaryModal.style.display = 'block';
         }
@@ -219,6 +270,7 @@ document.addEventListener('DOMContentLoaded', () => {
         priceSummary.style.display = 'none';
         timeSelection.style.display = 'none';
         btnNext.disabled = false;
+        btnSpin.disabled = false;
         reservationForm.reset();
         if (fpDate) fpDate.clear();
         if (fpStart) fpStart.clear();
