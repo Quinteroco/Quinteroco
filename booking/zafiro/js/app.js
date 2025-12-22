@@ -55,6 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let fpStart = null;
     let fpEnd = null;
     let lastReservationData = null;
+    let occupiedSlots = []; // To store current occupation
 
     // Load existing reservation
     checkExistingBooking();
@@ -232,51 +233,87 @@ document.addEventListener('DOMContentLoaded', () => {
         resetSteps();
     }
 
-    function initPickers() {
+    async function initPickers() {
         if (fpDate) fpDate.destroy();
         if (fpStart) fpStart.destroy();
         if (fpEnd) fpEnd.destroy();
 
+        // 1. Fetch occupied slots for this service
+        const snapshot = await db.collection('bookings')
+            .where('serviceId', '==', currentService.id)
+            .where('status', 'in', ['Reserva solicitada', 'Reserva pagada'])
+            .get();
+
+        occupiedSlots = snapshot.docs.map(doc => doc.data());
+
         const minTime = currentService.availability ? currentService.availability.startTime : "00:00";
         const maxTime = currentService.availability ? currentService.availability.endTime : "23:59";
+
+        // Determine disabled dates (for full rentals)
+        const disabledDates = [];
+        if (currentService.type === 'full') {
+            occupiedSlots.forEach(booking => {
+                if (booking.type === 'full' && booking.dates && booking.dates.length === 2) {
+                    // booking.dates are Firebase Timestamps, convert to JS Date objects
+                    const startDate = booking.dates[0].toDate();
+                    const endDate = booking.dates[1].toDate();
+                    disabledDates.push({ from: startDate, to: endDate });
+                }
+            });
+        }
 
         fpDate = flatpickr(calendarInput, {
             locale: 'es',
             minDate: 'today',
+            disable: disabledDates,
             mode: currentService.type === 'full' ? 'range' : 'single',
             onChange: (selectedDates) => {
-                if (currentService.type === 'partial' && selectedDates.length > 0) {
+                if (currentService.type === 'partial' && selectedDates.length === 1) {
                     timeSelection.style.display = 'block';
-                    validateAndCalculate();
+                    updateTimePickers(selectedDates[0], minTime, maxTime);
+                    updateSummary();
                 } else if (currentService.type === 'full' && selectedDates.length === 2) {
                     updateSummary();
                 }
             }
         });
+    }
 
-        if (currentService.type === 'partial') {
-            fpStart = flatpickr(startTimeInput, {
-                enableTime: true,
-                noCalendar: true,
-                dateFormat: "H:i",
-                time_24hr: true,
-                minTime: minTime,
-                maxTime: maxTime,
-                onChange: () => updateSummary()
-            });
-
-            fpEnd = flatpickr(endTimeInput, {
-                enableTime: true,
-                noCalendar: true,
-                dateFormat: "H:i",
-                time_24hr: true,
-                minTime: minTime,
-                maxTime: maxTime,
-                onChange: () => updateSummary()
-            });
-        } else {
-            timeSelection.style.display = 'none';
+    function parseSpanishDate(str) {
+        if (!str) return new Date();
+        const parts = str.split('/');
+        if (parts.length === 3) {
+            return new Date(parts[2], parts[1] - 1, parts[0]);
         }
+        return new Date(str);
+    }
+
+    function updateTimePickers(selectedDate, minTime, maxTime) {
+        if (fpStart) fpStart.destroy();
+        if (fpEnd) fpEnd.destroy();
+
+        // Adjust for today's time
+        const now = new Date();
+        let finalMinTime = minTime;
+        if (selectedDate.toDateString() === now.toDateString()) {
+            const currentHour = now.getHours().toString().padStart(2, '0');
+            const currentMin = now.getMinutes().toString().padStart(2, '0');
+            const currentTimeStr = `${currentHour}:${currentMin}`;
+            if (currentTimeStr > minTime) finalMinTime = currentTimeStr;
+        }
+
+        const timeConfig = {
+            enableTime: true,
+            noCalendar: true,
+            dateFormat: "H:i",
+            time_24hr: true,
+            minTime: finalMinTime,
+            maxTime: maxTime,
+            onChange: () => updateSummary()
+        };
+
+        fpStart = flatpickr(startTimeInput, timeConfig);
+        fpEnd = flatpickr(endTimeInput, timeConfig);
     }
 
     function updateSummary() {
@@ -294,32 +331,55 @@ document.addEventListener('DOMContentLoaded', () => {
                 valid = true;
                 lastReservationData = { type: 'full', service: currentService.name, dates: fpDate.selectedDates, total };
             }
-        } else {
-            const date = fpDate.selectedDates[0];
+        } else { // This is the 'partial' service type
             const startStr = startTimeInput.value;
             const endStr = endTimeInput.value;
+            const selectedDate = fpDate.selectedDates[0];
+            const dateStr = selectedDate ? flatpickr.formatDate(selectedDate, "Y-m-d") : null;
 
-            if (date && startStr && endStr) {
-                const start = fpStart.selectedDates[0];
-                const end = fpEnd.selectedDates[0];
+            if (startStr && endStr && dateStr) {
+                // Conflict Check
+                const hasConflict = occupiedSlots.some(b => {
+                    // Ensure booking is partial, on the same date, and has valid times
+                    if (b.type !== 'partial' || !b.date || !b.startTime || !b.endTime) return false;
 
-                if (start && end) {
-                    let diffMs = end - start;
-                    const diffHours = diffMs / (1000 * 60 * 60);
+                    // Convert Firebase Timestamp or String to something comparable
+                    let bookingDate = "";
+                    if (b.date && b.date.toDate) {
+                        bookingDate = flatpickr.formatDate(b.date.toDate(), "Y-m-d");
+                    } else if (typeof b.date === 'string') {
+                        bookingDate = b.date; // already YYYY-MM-DD
+                    }
 
-                    if (diffHours > 9 || diffHours <= 0) {
-                        summaryDetails.innerText = diffHours > 9 ? "⚠️ Máximo 9h." : "⚠️ Hora fin inválida.";
-                        summaryDetails.style.color = "#cc0000";
-                        priceSummary.style.display = 'block';
+                    if (bookingDate !== dateStr) return false;
+
+                    const bStart = b.startTime;
+                    const bEnd = b.endTime;
+
+                    // Check for overlap: (startA < endB) && (endA > startB)
+                    return (startStr < bEnd && endStr > bStart);
+                });
+
+                if (hasConflict) {
+                    details = `<span style="color:red;">Lo sentimos, este horario ya está reservado.</span>`;
+                    valid = false;
+                    btnNext.disabled = true;
+                } else if (startStr >= endStr) {
+                    details = `<span style="color:red;">La hora de fin debe ser posterior a la de inicio.</span>`;
+                    valid = false;
+                    btnNext.disabled = true;
+                } else {
+                    const diff = (new Date(`2000-01-01 ${endStr}`) - new Date(`2000-01-01 ${startStr}`)) / (1000 * 60 * 60);
+                    if (diff > 9) {
+                        details = `<span style="color:red;">Máximo 9 horas por reserva parcial.</span>`;
+                        valid = false;
                         btnNext.disabled = true;
-                        return;
                     } else {
-                        total = Math.ceil(diffHours) * currentService.price;
-                        details = `${Math.ceil(diffHours)} hora(s) seleccionada(s)`;
+                        total = currentService.price * diff;
                         valid = true;
+                        details = `<strong>${diff.toFixed(1)} horas</strong> • Total: $${total.toLocaleString()}`;
                         btnNext.disabled = false;
-                        summaryDetails.style.color = "inherit";
-                        lastReservationData = { type: 'partial', service: currentService.name, date, startTime: startStr, endTime: endStr, total };
+                        lastReservationData = { type: 'partial', service: currentService.name, serviceId: currentService.id, date: selectedDate, startTime: startStr, endTime: endStr, total };
                     }
                 }
             }
@@ -327,8 +387,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (valid) {
             totalPriceSpan.innerText = `$${total.toLocaleString()}`;
-            summaryDetails.innerText = details;
+            summaryDetails.innerHTML = details;
             priceSummary.style.display = 'block';
+        } else if (details) {
+            summaryDetails.innerHTML = details;
+            priceSummary.style.display = 'block';
+            totalPriceSpan.innerText = "$0";
         }
     }
 
@@ -339,6 +403,49 @@ document.addEventListener('DOMContentLoaded', () => {
 
     reservationForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        btnNext.disabled = true; // Prevent double click
+
+        // Final Security Conflict Check
+        let finalCheck = false;
+        try {
+            const snap = await db.collection('bookings')
+                .where('serviceId', '==', currentService.id)
+                .where('status', 'in', ['Reserva solicitada', 'Reserva pagada'])
+                .get();
+
+            const currentOccupation = snap.docs.map(doc => doc.data());
+
+            if (currentService.type === 'partial') {
+                const startStr = startTimeInput.value;
+                const endStr = endTimeInput.value;
+                const d = fpDate.selectedDates[0];
+                const dStr = d ? flatpickr.formatDate(d, "Y-m-d") : null;
+
+                finalCheck = !currentOccupation.some(b => {
+                    let bDate = b.date && b.date.toDate ? flatpickr.formatDate(b.date.toDate(), "Y-m-d") : b.date;
+                    return b.type === 'partial' && bDate === dStr && (startStr < b.endTime && endStr > b.startTime);
+                });
+            } else {
+                // For full rentals
+                const [start, end] = fpDate.selectedDates;
+                finalCheck = !currentOccupation.some(b => {
+                    if (b.type !== 'full' || !b.dates || b.dates.length !== 2) return false;
+                    const bStart = b.dates[0].toDate();
+                    const bEnd = b.dates[1].toDate();
+                    return (start < bEnd && end > bStart);
+                });
+            }
+        } catch (err) {
+            console.error("Conflict check failed:", err);
+            finalCheck = true; // Fallback to let Firestore handle it or assume valid
+        }
+
+        if (!finalCheck) {
+            alert("¡Lo sentimos! Alguien se te ha adelantado y ha reservado este horario hace unos segundos. Por favor elige otro.");
+            location.reload();
+            return;
+        }
+
         const formData = new FormData(reservationForm);
         const reservation = {
             ...lastReservationData,

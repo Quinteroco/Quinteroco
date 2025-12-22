@@ -31,8 +31,9 @@
                     </li>
                     <li><a href="#" id="nav-bookings"><span class="nav-icon">📅</span> Reservas</a></li>
                     <li><a href="#" id="nav-services"><span class="nav-icon">🚤</span> Experiencias</a></li>
-                    <li><a href="#"><span class="nav-icon">👥</span> Usuarios</a></li>
-                    <li><a href="#"><span class="nav-icon">⚙️</span> Configuración</a></li>
+                    <li id="nav-admins-container" style="display: none;"><a href="#" id="nav-admins"><span
+                                class="nav-icon">👥</span> Usuarios</a></li>
+                    <li><a href="#" id="nav-config"><span class="nav-icon">⚙️</span> Configuración</a></li>
                 </ul>
             </nav>
 
@@ -126,8 +127,29 @@
                     </table>
                 </div>
             </div>
-    </div>
-    </main>
+            <!-- Admins View -->
+            <div id="view-admins" class="admin-view" style="display: none;">
+                <div class="section-header">
+                    <h3>Gestión de Usuarios (Admins)</h3>
+                    <button class="btn-primary" onclick="openAddAdminModal()">+ Agregar Administrador</button>
+                </div>
+                <div class="table-container glass">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Usuario/Email</th>
+                                <th>Permisos</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admins-table-body">
+                            <!-- Data injected via admin.js -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
     </div>
 
     <div id="details-modal" class="modal">
@@ -248,6 +270,63 @@
             </form>
         </div>
     </div>
+    <div id="permissions-modal" class="modal">
+        <div class="modal-content glass admin-edit-modal" style="max-width: 500px;">
+            <span class="close-modal" id="close-permissions-modal">&times;</span>
+            <h2 class="mb-20">Permisos de Usuario</h2>
+            <p id="perm-user-email" class="mb-20" style="color: var(--admin-accent); font-weight: bold;"></p>
+            <form id="permissions-form">
+                <input type="hidden" id="perm-user-id">
+                <div class="form-group mb-20">
+                    <label class="checkbox-container"
+                        style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" id="perm-manage-exp"
+                            style="width: 18px; height: 18px; accent-color: var(--admin-accent);">
+                        <span>Crear y Editar Experiencias</span>
+                    </label>
+                </div>
+                <div class="form-group mb-20">
+                    <label class="checkbox-container"
+                        style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" id="perm-edit-status"
+                            style="width: 18px; height: 18px; accent-color: var(--admin-accent);">
+                        <span>Editar Estados de Experiencias</span>
+                    </label>
+                </div>
+                <div class="form-group mb-20">
+                    <label class="checkbox-container"
+                        style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" id="perm-delete-bookings"
+                            style="width: 18px; height: 18px; accent-color: var(--admin-accent);">
+                        <span>Eliminar Reservas</span>
+                    </label>
+                </div>
+
+                <div class="modal-actions mt-40">
+                    <button type="submit" class="btn-primary w-100">Guardar Permisos</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="add-admin-modal" class="modal">
+        <div class="modal-content glass admin-edit-modal" style="max-width: 500px;">
+            <span class="close-modal" id="close-add-admin">&times;</span>
+            <h2 class="mb-20">Vincular Administrador</h2>
+            <p class="mb-20" style="font-size: 14px; opacity: 0.8;">Si ya creaste el usuario en la consola de Firebase,
+                ingresa su correo aquí para que aparezca en la lista y puedas darle permisos.</p>
+            <form id="add-admin-form">
+                <div class="form-group mb-20">
+                    <label>Correo Electrónico</label>
+                    <input type="email" id="new-admin-email" required placeholder="ejemplo@correo.com">
+                </div>
+                <div class="modal-actions mt-40">
+                    <button type="submit" class="btn-primary w-100">Agregar a la lista</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Cloudinary Widget -->
     <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
 

@@ -1,3 +1,6 @@
+const MASTER_ADMIN = "quintero.orlandoc@gmail.com";
+let currentUserPermissions = null;
+
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('login-form');
     const btnLogout = document.getElementById('btn-logout');
@@ -108,7 +111,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const navLinks = {
         'nav-dashboard': 'view-dashboard',
         'nav-services': 'view-services',
-        'nav-bookings': 'view-dashboard'
+        'nav-bookings': 'view-dashboard',
+        'nav-admins': 'view-admins'
     };
 
     Object.keys(navLinks).forEach(id => {
@@ -128,12 +132,89 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = 'login.html';
         } else if (isIndex && user) {
             const adminData = JSON.parse(localStorage.getItem('zafiro_admin')) || { email: user.email };
+
+            // Sync current user to 'admins' collection and get permissions
+            syncCurrentUser(user);
+
             initDashboard(user, adminData);
-            loadServices(); // Always load services in background
-            initCloudinaryWidget(); // Init Cloudinary
+            loadServices();
+            initCloudinaryWidget();
+
+            if (user.email === MASTER_ADMIN) {
+                loadAdmins();
+                const adminNav = document.getElementById('nav-admins-container');
+                if (adminNav) adminNav.style.display = 'block';
+            }
         }
     });
 });
+
+async function syncCurrentUser(user) {
+    // 1. Try to find by UID (the standard way)
+    let adminDoc = await db.collection('admins').doc(user.uid).get();
+
+    // 2. If not found by UID, check if they were pre-registered by Email
+    if (!adminDoc.exists) {
+        const emailSnapshot = await db.collection('admins').where('email', '==', user.email).get();
+        if (!emailSnapshot.empty) {
+            const manualDoc = emailSnapshot.docs[0];
+            const manualData = manualDoc.data();
+
+            // Link this UID to the pre-registered data and move it to the UID-based document
+            await db.collection('admins').doc(user.uid).set({
+                ...manualData,
+                uid: user.uid,
+                lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            // Delete the old email-indexed or auto-ID document to keep it clean
+            await db.collection('admins').doc(manualDoc.id).delete();
+
+            // Refresh reference
+            adminDoc = await db.collection('admins').doc(user.uid).get();
+        }
+    }
+
+    if (!adminDoc.exists) {
+        // Create initial doc for new admin (Total mystery user)
+        const initialData = {
+            email: user.email,
+            uid: user.uid,
+            permissions: {
+                manageExperiences: false,
+                editStatus: false,
+                deleteBookings: false
+            },
+            lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        // Master gets everything
+        if (user.email === MASTER_ADMIN) {
+            initialData.permissions = {
+                manageExperiences: true,
+                editStatus: true,
+                deleteBookings: true
+            };
+        }
+        await db.collection('admins').doc(user.uid).set(initialData);
+        currentUserPermissions = initialData.permissions;
+    } else {
+        await db.collection('admins').doc(user.uid).update({
+            lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        currentUserPermissions = adminDoc.data().permissions;
+    }
+    applyPermissionsUI();
+}
+
+function applyPermissionsUI() {
+    if (!currentUserPermissions) return;
+
+    // Hide/Show based on permissions
+    const btnNewExp = document.querySelector('[onclick="openExperienceModal()"]');
+    if (btnNewExp && !currentUserPermissions.manageExperiences) btnNewExp.style.display = 'none';
+
+    // We call this every time a table renders too
+}
 
 function showToast(message, type = 'info') {
     let container = document.querySelector('.toast-container');
@@ -242,6 +323,7 @@ function loadBookings(adminData, currentFilter = 'all') {
                 : (monthlyRevenue >= 1000 ? `$${(monthlyRevenue / 1000).toFixed(1)}K` : `$${monthlyRevenue.toLocaleString()}`);
             document.getElementById('stat-revenue-month').innerText = revenueStr;
         }
+        applyPermissionsUI();
     });
 }
 
@@ -293,8 +375,6 @@ function initCloudinaryWidget() {
             uploadedImages.push(result.info.secure_url);
             renderImagePreviews();
             showToast('Imagen subida correctamente', 'success');
-        } else if (result && result.event === "display-changed" && result.info === "closed") {
-            // Widget closed
         }
     });
 
@@ -343,7 +423,7 @@ function loadServices() {
     if (!tableBody) return;
 
     db.collection('services').onSnapshot((snapshot) => {
-        console.log(`Zafiro Admin: Sincronizando experiencias (${snapshot.size} detectadas)`);
+        console.log(`Zafiro Admin: Sincronizando experiencias(${snapshot.size} detectadas)`);
         tableBody.innerHTML = '';
 
         // Update stat count
@@ -352,7 +432,7 @@ function loadServices() {
         }
 
         if (snapshot.empty) {
-            tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 40px; color: var(--admin-text-muted);">No has creado ninguna experiencia aún. Haz clic en "+ Nueva Experiencia" para comenzar.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 40px; color: var(--admin-text-muted);">No hay experiencias aún.</td></tr>';
             return;
         }
 
@@ -371,12 +451,15 @@ function loadServices() {
                 <td><span class="badge" style="background:rgba(255,255,255,0.05)!important; color:white!important;">${type}</span></td>
                 <td>$${price}</td>
                 <td><span class="status-badge ${getStatusClass(status)}">${status}</span></td>
-                <td><button class="btn-action" onclick="editExperience('${doc.id}')">Editar</button></td>
+                <td>${(currentUserPermissions?.manageExperiences || auth.currentUser?.email === MASTER_ADMIN)
+                    ? `<button class="btn-action" onclick="editExperience('${doc.id}')">Editar</button>`
+                    : '<small>Sólo Lectura</small>'}</td>
             `;
             tableBody.appendChild(row);
         });
+        applyPermissionsUI();
     }, (error) => {
-        console.error("Zafiro Error: Fallo en onSnapshot servicios:", error);
+        console.error("Zafiro Error services:", error);
     });
 }
 
@@ -501,6 +584,21 @@ function viewDetails(id) {
             document.getElementById('edit-service').value = data.service || 'Yate Diamante Real';
             document.getElementById('edit-status').value = status;
             document.getElementById('edit-total').value = data.total || 0;
+
+            // Permissions for deleting bookings
+            const btnDel = document.getElementById('btn-delete-booking');
+            if (btnDel) {
+                btnDel.style.display = (currentUserPermissions?.deleteBookings || auth.currentUser.email === MASTER_ADMIN)
+                    ? 'inline-block' : 'none';
+            }
+
+            // Permissions for editing status/info
+            const btnSave = detailsModal.querySelector('button[type="submit"]');
+            if (btnSave) {
+                btnSave.style.display = (currentUserPermissions?.editStatus || auth.currentUser.email === MASTER_ADMIN)
+                    ? 'inline-block' : 'none';
+            }
+
             detailsModal.style.display = 'flex';
         }
     });
@@ -508,9 +606,146 @@ function viewDetails(id) {
 
 if (closeDetails) closeDetails.onclick = () => detailsModal.style.display = 'none';
 
+// ADMINS MANAGEMENT
+function loadAdmins() {
+    const tableBody = document.getElementById('admins-table-body');
+    if (!tableBody) return;
+
+    db.collection('admins').onSnapshot((snapshot) => {
+        tableBody.innerHTML = '';
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            const row = document.createElement('tr');
+            const perms = [];
+            if (data.permissions?.manageExperiences) perms.push('Exp');
+            if (data.permissions?.editStatus) perms.push('Status');
+            if (data.permissions?.deleteBookings) perms.push('Del');
+
+            const dateStr = data.lastLogin && data.lastLogin.toDate ? data.lastLogin.toDate().toLocaleString() : 'Nunca';
+
+            row.innerHTML = `
+                < td > ${data.email}</td >
+                <td>${perms.length > 0 ? perms.join(', ') : '<small>Sin permisos</small>'}</td>
+                <td>${dateStr}</td>
+                <td>
+                    ${data.email === MASTER_ADMIN
+                    ? '<span class="badge" style="background:var(--admin-accent)!important;">Master</span>'
+                    : `
+                            <button class="btn-action" onclick="openPermissionsModal('${doc.id}')">Permisos</button>
+                            <button class="btn-action" style="background:rgba(255,0,0,0.1); color:#ff5252;" onclick="removeAdmin('${doc.id}', '${data.email}')">Eliminar</button>
+                          `}
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+    });
+}
+
+const permissionsModal = document.getElementById('permissions-modal');
+const permissionsForm = document.getElementById('permissions-form');
+
+window.openPermissionsModal = function (id) {
+    db.collection('admins').doc(id).get().then(doc => {
+        if (doc.exists) {
+            const data = doc.data();
+            document.getElementById('perm-user-id').value = id;
+            document.getElementById('perm-user-email').innerText = data.email;
+
+            document.getElementById('perm-manage-exp').checked = data.permissions?.manageExperiences || false;
+            document.getElementById('perm-edit-status').checked = data.permissions?.editStatus || false;
+            document.getElementById('perm-delete-bookings').checked = data.permissions?.deleteBookings || false;
+
+            permissionsModal.style.display = 'flex';
+        }
+    });
+};
+
+if (permissionsForm) {
+    permissionsForm.onsubmit = async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('perm-user-id').value;
+        const data = {
+            permissions: {
+                manageExperiences: document.getElementById('perm-manage-exp').checked,
+                editStatus: document.getElementById('perm-edit-status').checked,
+                deleteBookings: document.getElementById('perm-delete-bookings').checked
+            }
+        };
+        try {
+            await db.collection('admins').doc(id).update(data);
+            showToast('Permisos actualizados', 'success');
+            permissionsModal.style.display = 'none';
+        } catch (error) {
+            showToast('Error: ' + error.message, 'error');
+        }
+    };
+}
+
+document.getElementById('close-permissions-modal').onclick = () => permissionsModal.style.display = 'none';
+
 window.onclick = (e) => {
     if (e.target == detailsModal) detailsModal.style.display = 'none';
     if (e.target == experienceModal) experienceModal.style.display = 'none';
+    if (e.target == permissionsModal) permissionsModal.style.display = 'none';
+    if (e.target == document.getElementById('add-admin-modal')) document.getElementById('add-admin-modal').style.display = 'none';
+};
+
+
+// ADD ADMIN LOGIC
+window.openAddAdminModal = function () {
+    document.getElementById('add-admin-form').reset();
+    document.getElementById('add-admin-modal').style.display = 'flex';
+};
+
+const addAdminForm = document.getElementById('add-admin-form');
+if (addAdminForm) {
+    addAdminForm.onsubmit = async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('new-admin-email').value.trim().toLowerCase();
+
+        if (!email) return;
+
+        try {
+            // Check if already exists in Firestore
+            const snapshot = await db.collection('admins').where('email', '==', email).get();
+            if (!snapshot.empty) {
+                showToast('Este usuario ya está en la lista', 'info');
+                document.getElementById('add-admin-modal').style.display = 'none';
+                return;
+            }
+
+            // Create placeholder doc in Firestore
+            await db.collection('admins').add({
+                email: email,
+                uid: null, // Will be linked on their first login
+                permissions: {
+                    manageExperiences: false,
+                    editStatus: false,
+                    deleteBookings: false
+                },
+                lastLogin: null
+            });
+
+            showToast('Usuario vinculado. Ahora puedes asignarle permisos.', 'success');
+            document.getElementById('add-admin-modal').style.display = 'none';
+        } catch (error) {
+            showToast('Error: ' + error.message, 'error');
+        }
+    };
+}
+
+document.getElementById('close-add-admin').onclick = () => document.getElementById('add-admin-modal').style.display = 'none';
+
+window.removeAdmin = async function (id, email) {
+    if (email === MASTER_ADMIN) return;
+    if (confirm(`¿Estás seguro de eliminar a ${email} de la lista de administradores? (Esto no borra su cuenta de Firebase, solo sus permisos en este panel)`)) {
+        try {
+            await db.collection('admins').doc(id).delete();
+            showToast('Administrador eliminado de la lista', 'success');
+        } catch (error) {
+            showToast('Error: ' + error.message, 'error');
+        }
+    }
 };
 
 // Booking update/delete

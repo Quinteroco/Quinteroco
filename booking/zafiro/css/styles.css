@@ -944,3 +944,12 @@ footer {
     font-size: 18px;
     letter-spacing: 2px;
 }
+
+/* Disabled Dates in Calendar */
+.flatpickr-day.flatpickr-disabled,
+.flatpickr-day.flatpickr-disabled:hover {
+    color: rgba(255, 0, 0, 0.4) !important;
+    background: transparent !important;
+    cursor: not-allowed;
+    text-decoration: line-through;
+}
