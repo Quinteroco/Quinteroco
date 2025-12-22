@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login | Zafiro Marine</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="css/admin-styles.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap"
+        rel="stylesheet">
+</head>
+
+<body class="admin-login-body">
+    <div class="login-container">
+        <div class="login-card glass">
+            <div class="login-header">
+                <div class="admin-logo">
+                    <svg class="minimal-boat" viewBox="0 0 100 40" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10 30 L90 30 L85 15 L35 15 Z" fill="none" stroke="currentColor" stroke-width="2" />
+                        <path d="M30 15 L35 5 L65 5 L70 15" fill="none" stroke="currentColor" stroke-width="2" />
+                    </svg>
+                    <h1>ZAFIRO <span>MARINE</span></h1>
+                </div>
+                <p>Panel de Administración</p>
+            </div>
+
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="username">Usuario</label>
+                    <input type="text" id="username" placeholder="Ingrese su usuario" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn-primary w-100">INGRESAR AL PANEL</button>
+                <div class="login-actions">
+                    <a href="#" id="btn-change-pass-link" class="link-secondary">Cambiar contraseña</a>
+                </div>
+            </form>
+
+            <div class="login-footer">
+                <p>&copy; 2025 Zafiro Marine Luxury Services</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="../js/firebase-config.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+
+</html>

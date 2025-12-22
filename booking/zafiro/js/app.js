@@ -52,6 +52,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Open Modal
     reserveBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
+            // Check if there is an active booking first
+            if (localStorage.getItem('zafiro_booking')) {
+                showReservationSummary();
+                return;
+            }
+
             const card = e.target.closest('.card');
             currentService = {
                 id: card.dataset.id,
@@ -182,18 +188,32 @@ document.addEventListener('DOMContentLoaded', () => {
         stepForm.style.display = 'block';
     });
 
-    reservationForm.addEventListener('submit', (e) => {
+    reservationForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const formData = new FormData(reservationForm);
         const reservation = {
             ...lastReservationData,
             client: formData.get('name') || document.getElementById('name').value,
             whatsapp: formData.get('whatsapp') || document.getElementById('whatsapp').value,
-            discount: 0
+            discount: 0,
+            status: 'Reserva solicitada',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
-        localStorage.setItem('zafiro_booking', JSON.stringify(reservation));
-        modal.style.display = 'none';
-        successPopup.style.display = 'block';
+
+        try {
+            // Save to Firebase
+            const docRef = await db.collection('bookings').add(reservation);
+            reservation.id = docRef.id;
+
+            // Save local copy
+            localStorage.setItem('zafiro_booking', JSON.stringify(reservation));
+
+            modal.style.display = 'none';
+            successPopup.style.display = 'block';
+        } catch (error) {
+            console.error("Error saving booking:", error);
+            alert("Hubo un error al procesar tu reserva. Por favor intenta de nuevo.");
+        }
     });
 
     // Roulette Logic
@@ -220,14 +240,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 4000);
     });
 
-    btnClaim.addEventListener('click', () => {
+    btnClaim.addEventListener('click', async () => {
         const data = JSON.parse(localStorage.getItem('zafiro_booking'));
         if (data) {
             data.discount = 0.10;
-            localStorage.setItem('zafiro_booking', JSON.stringify(data));
+
+            try {
+                if (data.id) {
+                    await db.collection('bookings').doc(data.id).update({ discount: 0.10 });
+                }
+                localStorage.setItem('zafiro_booking', JSON.stringify(data));
+            } catch (error) {
+                console.error("Error updating discount:", error);
+            }
         }
-        closeAllModals();
+        rouletteModal.style.display = 'none';
         checkExistingBooking();
+        showReservationSummary();
     });
 
     whatsappBtn.addEventListener('click', (e) => {
@@ -237,6 +266,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     bookingBadge.addEventListener('click', () => {
+        showReservationSummary();
+    });
+
+    function showReservationSummary() {
         const data = JSON.parse(localStorage.getItem('zafiro_booking'));
         if (data) {
             const discountAmount = data.total * (data.discount || 0);
@@ -255,14 +288,61 @@ document.addEventListener('DOMContentLoaded', () => {
             whatsappFinalBtn.href = `https://wa.me/573000000000?text=${msg}`;
             summaryModal.style.display = 'block';
         }
-    });
+    }
 
-    function checkExistingBooking() {
-        const data = localStorage.getItem('zafiro_booking');
-        if (data) {
-            bookingBadge.style.display = 'flex';
+    async function checkExistingBooking() {
+        const rawData = localStorage.getItem('zafiro_booking');
+
+        if (!rawData) {
+            if (bookingBadge) bookingBadge.style.display = 'none';
+            return;
+        }
+
+        try {
+            const data = JSON.parse(rawData);
+
+            if (!data || !data.id) {
+                console.warn("Zafiro Sync: Datos corruptos o sin ID. Limpiando...");
+                localStorage.removeItem('zafiro_booking');
+                if (bookingBadge) bookingBadge.style.display = 'none';
+                return;
+            }
+
+            // Mostramos mientras validamos para respuesta instantánea
+            if (bookingBadge) bookingBadge.style.display = 'flex';
+
+            console.log("Zafiro Sync: Validando reserva " + data.id + " con el servidor...");
+
+            try {
+                const doc = await db.collection('bookings').doc(data.id).get({ source: 'server' });
+
+                if (!doc.exists) {
+                    console.log("Zafiro Sync: La reserva ya no existe en la nube. Borrando local...");
+                    localStorage.removeItem('zafiro_booking');
+                    if (bookingBadge) bookingBadge.style.display = 'none';
+                } else {
+                    console.log("Zafiro Sync: Reserva válida confirmada.");
+                }
+            } catch (innerError) {
+                // Si el error es de permisos, es muy probable que la regla de Firebase esté bloqueando 
+                // o que el documento haya sido borrado y la regla de seguridad falle al intentar leerlo.
+                if (innerError.code === 'permission-denied') {
+                    console.warn("Zafiro Sync: Error de permisos. Esto sucede si no tienes reglas de 'read' abiertas o si la reserva fue borrada.");
+                    // En este caso, por seguridad y para evitar "fantasmas", limpiamos igual.
+                    localStorage.removeItem('zafiro_booking');
+                    if (bookingBadge) bookingBadge.style.display = 'none';
+                } else {
+                    throw innerError; // Pasar al catch exterior para errores de red, etc.
+                }
+            }
+        } catch (error) {
+            console.error("Zafiro Sync: Error crítico en validación:", error);
+            // Si es un error de red (offline), no borramos para no arruinar la experiencia del usuario.
         }
     }
+
+    checkExistingBooking();
+    setInterval(checkExistingBooking, 30000);
 
     function resetSteps() {
         stepDate.style.display = 'block';

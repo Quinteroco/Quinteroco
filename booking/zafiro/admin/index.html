@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Zafiro Marine</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="css/admin-styles.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap"
+        rel="stylesheet">
+</head>
+
+<body class="admin-body">
+    <div class="admin-layout">
+        <aside class="sidebar glass">
+            <div class="sidebar-header">
+                <div class="admin-logo">
+                    <svg class="minimal-boat" viewBox="0 0 100 40" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10 30 L90 30 L85 15 L35 15 Z" fill="none" stroke="currentColor" stroke-width="2" />
+                        <path d="M30 15 L35 5 L65 5 L70 15" fill="none" stroke="currentColor" stroke-width="2" />
+                    </svg>
+                    <h1>ZAFIRO <span>ADMIN</span></h1>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="active"><a href="#"><span class="nav-icon">📊</span> Dashboard</a></li>
+                    <li><a href="#"><span class="nav-icon">📅</span> Reservas</a></li>
+                    <li><a href="#"><span class="nav-icon">🚤</span> Servicios</a></li>
+                    <li><a href="#"><span class="nav-icon">👥</span> Usuarios</a></li>
+                    <li><a href="#"><span class="nav-icon">⚙️</span> Configuración</a></li>
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button id="btn-change-password" class="btn-outline w-100 mb-10">Cambiar Contraseña</button>
+                <button id="btn-logout" class="btn-secondary w-100">Cerrar Sesión</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-bar glass">
+                <div class="header-left">
+                    <button id="menu-toggle" class="btn-icon-only">☰</button>
+                    <h2 id="page-title">Bienvenido, Admin</h2>
+                </div>
+                <div class="user-meta">
+                    <span id="user-role-badge" class="badge">Super Admin</span>
+                </div>
+            </header>
+
+            <div class="stats-grid">
+                <div class="stat-card glass">
+                    <span class="stat-label">Reservas Hoy</span>
+                    <h3 id="stat-bookings-today" class="stat-value">0</h3>
+                </div>
+                <div class="stat-card glass">
+                    <div class="stat-header-flex">
+                        <span class="stat-label">Ingresos Mes</span>
+                        <select id="revenue-status-filter" class="mini-glass-select">
+                            <option value="all">Todo</option>
+                            <option value="Reserva solicitada">Res. Solicitada</option>
+                            <option value="Reserva pagada">Res. Pagada</option>
+                            <option value="Experiencia realizada">Realizada</option>
+                        </select>
+                    </div>
+                    <h3 id="stat-revenue-month" class="stat-value">$0</h3>
+                </div>
+                <div class="stat-card glass">
+                    <span class="stat-label">Servicios Activos</span>
+                    <h3 id="stat-active-services" class="stat-value">3</h3>
+                </div>
+            </div>
+
+            <section class="recent-bookings mt-40">
+                <div class="section-header">
+                    <h3>Reservas Recientes</h3>
+                    <a href="#" class="view-all">Ver todas</a>
+                </div>
+                <div class="table-container glass">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Servicio</th>
+                                <th>Fecha</th>
+                                <th>Total</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bookings-table-body">
+                            <!-- Data will be injected here via admin.js -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+    </div>
+    </main>
+    </div>
+
+    <div id="details-modal" class="modal">
+        <div class="modal-content glass admin-edit-modal">
+            <span class="close-modal" id="close-details">&times;</span>
+            <h2 class="mb-20">Detalles de Reserva</h2>
+            <form id="edit-booking-form">
+                <input type="hidden" id="edit-id">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Cliente</label>
+                        <input type="text" id="edit-client" required>
+                    </div>
+                    <div class="form-group">
+                        <label>WhatsApp</label>
+                        <input type="text" id="edit-whatsapp" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Servicio</label>
+                        <select id="edit-service">
+                            <option value="Yate Diamante Real">Yate Diamante Real</option>
+                            <option value="Lancha Deportiva Zafiro">Lancha Deportiva Zafiro</option>
+                            <option value="Catamarán Aurora">Catamarán Aurora</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Estado</label>
+                        <select id="edit-status">
+                            <option value="Reserva solicitada">Reserva solicitada</option>
+                            <option value="Reserva pagada">Reserva pagada</option>
+                            <option value="Experiencia realizada">Experiencia realizada</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Total ($)</label>
+                        <input type="number" id="edit-total" required>
+                    </div>
+                </div>
+                <div class="modal-actions mt-40">
+                    <button type="submit" class="btn-primary">Guardar Cambios</button>
+                    <button type="button" id="btn-delete-booking" class="btn-danger">Eliminar Reserva</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="../js/firebase-config.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+
+</html>
