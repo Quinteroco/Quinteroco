@@ -127,10 +127,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Protection check
     auth.onAuthStateChanged((user) => {
-        const isIndex = window.location.pathname.includes('index.html');
-        if (isIndex && !user) {
+        // Broaden path matching for GitHub Pages and other environments
+        const path = window.location.pathname;
+        const isAdminPage = path.includes('admin/index.html') || path.endsWith('admin/') || path.endsWith('admin');
+
+        if (isAdminPage && !user) {
             window.location.href = 'login.html';
-        } else if (isIndex && user) {
+        } else if (isAdminPage && user) {
             const adminData = JSON.parse(localStorage.getItem('zafiro_admin')) || { email: user.email };
 
             // Sync current user to 'admins' collection and get permissions
@@ -140,10 +143,18 @@ document.addEventListener('DOMContentLoaded', () => {
             loadServices();
             initCloudinaryWidget();
 
-            if (user.email === MASTER_ADMIN) {
+            // Case-insensitive check for Master Admin
+            if (user.email.toLowerCase() === MASTER_ADMIN.toLowerCase()) {
+                console.log("Zafiro Admin: Master Admin detected.");
                 loadAdmins();
                 const adminNav = document.getElementById('nav-admins-container');
-                if (adminNav) adminNav.style.display = 'block';
+                if (adminNav) {
+                    adminNav.style.display = 'block';
+                    adminNav.style.opacity = '1';
+                    adminNav.style.visibility = 'visible';
+                }
+            } else {
+                console.log("Zafiro Admin: Standard Admin detected (" + user.email + ")");
             }
         }
     });
@@ -207,13 +218,21 @@ async function syncCurrentUser(user) {
 }
 
 function applyPermissionsUI() {
-    if (!currentUserPermissions) return;
+    if (!currentUserPermissions || !auth.currentUser) return;
+
+    const isMaster = auth.currentUser.email.toLowerCase() === MASTER_ADMIN.toLowerCase();
 
     // Hide/Show based on permissions
     const btnNewExp = document.querySelector('[onclick="openExperienceModal()"]');
-    if (btnNewExp && !currentUserPermissions.manageExperiences) btnNewExp.style.display = 'none';
+    if (btnNewExp && !currentUserPermissions.manageExperiences && !isMaster) {
+        btnNewExp.style.display = 'none';
+    }
 
-    // We call this every time a table renders too
+    // Ensure the admins tab is visible for master even if this runs late
+    const adminNav = document.getElementById('nav-admins-container');
+    if (adminNav && isMaster) {
+        adminNav.style.display = 'block';
+    }
 }
 
 function showToast(message, type = 'info') {
