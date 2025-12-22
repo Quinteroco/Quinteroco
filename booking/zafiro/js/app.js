@@ -540,7 +540,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     ? data.dates.map(d => new Date(d).toLocaleDateString()).join(' - ')
                     : `${new Date(data.date).toLocaleDateString()} de ${data.startTime} a ${data.endTime}`}</p>
             `;
-            const msg = encodeURIComponent(`Hola Zafiro Marine, tengo una reserva para ${data.service} con un descuento del 10%. Mi nombre es ${data.client}.`);
+            const discText = data.discount > 0 ? ` con un descuento del ${data.discount * 100}%` : '';
+            const msg = encodeURIComponent(`Hola Zafiro Marine, tengo una reserva para ${data.service}${discText}. Mi nombre es ${data.client}.`);
             whatsappFinalBtn.href = `https://wa.me/573000000000?text=${msg}`;
             summaryModal.style.display = 'block';
         }

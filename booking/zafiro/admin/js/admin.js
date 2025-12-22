@@ -603,6 +603,7 @@ function viewDetails(id) {
             document.getElementById('edit-service').value = data.service || 'Yate Diamante Real';
             document.getElementById('edit-status').value = status;
             document.getElementById('edit-total').value = data.total || 0;
+            document.getElementById('edit-discount').value = (data.discount || 0) * 100;
 
             // Permissions for deleting bookings
             const btnDel = document.getElementById('btn-delete-booking');
@@ -778,7 +779,8 @@ if (editBookingForm) {
             whatsapp: document.getElementById('edit-whatsapp').value,
             service: document.getElementById('edit-service').value,
             status: document.getElementById('edit-status').value,
-            total: parseFloat(document.getElementById('edit-total').value)
+            total: parseFloat(document.getElementById('edit-total').value),
+            discount: parseFloat(document.getElementById('edit-discount').value) / 100
         };
         try {
             await db.collection('bookings').doc(id).update(data);
