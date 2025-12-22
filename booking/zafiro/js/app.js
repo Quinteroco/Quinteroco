@@ -40,6 +40,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const whatsappFinalBtn = document.getElementById('whatsapp-final-btn');
     const reservationDetailsDiv = document.getElementById('reservation-details');
 
+    // Gallery Elements
+    const galleryModal = document.getElementById('gallery-modal');
+    const galleryContainer = document.getElementById('gallery-images-container');
+    const btnGalleryPrev = document.getElementById('btn-gallery-prev');
+    const btnGalleryNext = document.getElementById('btn-gallery-next');
+    const currentImgSpan = document.getElementById('current-img');
+    const totalImgsSpan = document.getElementById('total-imgs');
+    let currentGalleryImages = [];
+    let currentGalleryIndex = 0;
+
     let currentService = null;
     let fpDate = null;
     let fpStart = null;
@@ -49,31 +59,157 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load existing reservation
     checkExistingBooking();
 
-    // Open Modal
-    reserveBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            // Check if there is an active booking first
-            if (localStorage.getItem('zafiro_booking')) {
-                showReservationSummary();
+    // Dynamic Service Loading
+    function renderServices() {
+        const grid = document.getElementById('services-grid');
+        if (!grid) return;
+
+        db.collection('services').where('status', '==', 'activo').onSnapshot((snapshot) => {
+            grid.innerHTML = '';
+            if (snapshot.empty) {
+                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">No hay experiencias disponibles en este momento.</p>';
                 return;
             }
 
-            const card = e.target.closest('.card');
-            currentService = {
-                id: card.dataset.id,
-                name: card.dataset.name,
-                type: card.dataset.type,
-                price: parseFloat(card.dataset.price)
-            };
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                const priceUnit = data.type === 'full' ? 'día' : 'hora';
+                const images = data.images || [data.image || './img/yate1.png'];
 
-            document.getElementById('modal-title').innerText = `Reservar ${currentService.name}`;
-            document.getElementById('modal-desc').innerText = currentService.type === 'full'
-                ? 'Alquiler por días completos.'
-                : 'Alquiler por horas (máximo 9h).';
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.dataset.id = doc.id;
+                card.dataset.name = data.name;
+                card.dataset.type = data.type;
+                card.dataset.price = data.price;
 
-            modal.style.display = 'block';
-            initPickers();
+                // Store availability and all images in dataset for modal access
+                card.dataset.images = JSON.stringify(images);
+                if (data.availability) {
+                    card.dataset.availability = JSON.stringify(data.availability);
+                }
+
+                // Render gallery dots if multiple images
+                const galleryDots = images.length > 1 ? `<div class="gallery-dots">${images.map((_, i) => `<span class="${i === 0 ? 'active' : ''}"></span>`).join('')}</div>` : '';
+
+                card.innerHTML = `
+                    <div class="card-img" style="background-image: url('${images[0]}');">
+                        ${galleryDots}
+                    </div>
+                    <div class="card-body">
+                        <h3>${data.name}</h3>
+                        <p>${data.description || ''}</p>
+                        <div class="price">Desde $${parseFloat(data.price).toLocaleString()} / ${priceUnit}</div>
+                        <button class="btn-reserve">Reservar Ahora</button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
         });
+    }
+
+    renderServices();
+
+    // Open Modal (Event Delegation)
+    const servicesGrid = document.getElementById('services-grid');
+    if (servicesGrid) {
+        servicesGrid.addEventListener('click', (e) => {
+            if (e.target.classList.contains('btn-reserve')) {
+                // Check if there is an active booking first
+                if (localStorage.getItem('zafiro_booking')) {
+                    showReservationSummary();
+                    return;
+                }
+
+                const card = e.target.closest('.card');
+                currentService = {
+                    id: card.dataset.id,
+                    name: card.dataset.name,
+                    type: card.dataset.type,
+                    price: parseFloat(card.dataset.price),
+                    availability: card.dataset.availability ? JSON.parse(card.dataset.availability) : null,
+                    images: JSON.parse(card.dataset.images || '[]')
+                };
+
+                document.getElementById('modal-title').innerText = `Reservar ${currentService.name}`;
+                document.getElementById('modal-desc').innerText = currentService.type === 'full'
+                    ? 'Alquiler por días completos.'
+                    : 'Alquiler por horas (máximo 9h).';
+
+                modal.style.display = 'block';
+                initPickers();
+            }
+
+            // Click on Image to open gallery
+            if (e.target.classList.contains('card-img')) {
+                const card = e.target.closest('.card');
+                const images = JSON.parse(card.dataset.images || '[]');
+                if (images.length > 0) {
+                    openGallery(images);
+                }
+            }
+        });
+    }
+
+    // Gallery Logic
+    function openGallery(images) {
+        currentGalleryImages = images;
+        currentGalleryIndex = 0;
+        renderGallery();
+        galleryModal.style.display = 'flex';
+        document.body.style.overflow = 'hidden'; // Lock scroll
+    }
+
+    function renderGallery() {
+        galleryContainer.innerHTML = '';
+        currentGalleryImages.forEach(src => {
+            const div = document.createElement('div');
+            div.className = 'gallery-image';
+            div.innerHTML = `<img src="${src}" alt="Gallery image">`;
+            galleryContainer.appendChild(div);
+        });
+        updateGalleryUI();
+    }
+
+    function updateGalleryUI() {
+        const offset = -currentGalleryIndex * 100;
+        galleryContainer.style.transform = `translateX(${offset}%)`;
+        currentImgSpan.innerText = currentGalleryIndex + 1;
+        totalImgsSpan.innerText = currentGalleryImages.length;
+
+        // Hide nav if only one image
+        btnGalleryPrev.style.display = currentGalleryImages.length > 1 ? 'block' : 'none';
+        btnGalleryNext.style.display = currentGalleryImages.length > 1 ? 'block' : 'none';
+    }
+
+    function nextImg() {
+        currentGalleryIndex = (currentGalleryIndex + 1) % currentGalleryImages.length;
+        updateGalleryUI();
+    }
+
+    function prevImg() {
+        currentGalleryIndex = (currentGalleryIndex - 1 + currentGalleryImages.length) % currentGalleryImages.length;
+        updateGalleryUI();
+    }
+
+    btnGalleryNext.onclick = nextImg;
+    btnGalleryPrev.onclick = prevImg;
+
+    document.querySelector('.close-gallery').onclick = () => {
+        galleryModal.style.display = 'none';
+        document.body.style.overflow = ''; // Unlock scroll
+    };
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (galleryModal.style.display === 'flex') {
+            if (e.key === 'ArrowRight') nextImg();
+            if (e.key === 'ArrowLeft') prevImg();
+            if (e.key === 'Escape') {
+                galleryModal.style.display = 'none';
+                document.body.style.overflow = '';
+            }
+        }
     });
 
     // Close Modals
@@ -101,6 +237,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (fpStart) fpStart.destroy();
         if (fpEnd) fpEnd.destroy();
 
+        const minTime = currentService.availability ? currentService.availability.startTime : "00:00";
+        const maxTime = currentService.availability ? currentService.availability.endTime : "23:59";
+
         fpDate = flatpickr(calendarInput, {
             locale: 'es',
             minDate: 'today',
@@ -110,27 +249,37 @@ document.addEventListener('DOMContentLoaded', () => {
                     timeSelection.style.display = 'block';
                     validateAndCalculate();
                 } else if (currentService.type === 'full' && selectedDates.length === 2) {
-                    validateAndCalculate();
+                    updateSummary();
                 }
             }
         });
 
         if (currentService.type === 'partial') {
-            const timeConfig = {
+            fpStart = flatpickr(startTimeInput, {
                 enableTime: true,
                 noCalendar: true,
                 dateFormat: "H:i",
                 time_24hr: true,
-                onChange: () => validateAndCalculate()
-            };
-            fpStart = flatpickr(startTimeInput, timeConfig);
-            fpEnd = flatpickr(endTimeInput, timeConfig);
+                minTime: minTime,
+                maxTime: maxTime,
+                onChange: () => updateSummary()
+            });
+
+            fpEnd = flatpickr(endTimeInput, {
+                enableTime: true,
+                noCalendar: true,
+                dateFormat: "H:i",
+                time_24hr: true,
+                minTime: minTime,
+                maxTime: maxTime,
+                onChange: () => updateSummary()
+            });
         } else {
             timeSelection.style.display = 'none';
         }
     }
 
-    function validateAndCalculate() {
+    function updateSummary() {
         let total = 0;
         let valid = false;
         let details = "";

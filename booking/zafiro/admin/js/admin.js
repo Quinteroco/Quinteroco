@@ -77,6 +77,50 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Global navigation access
+    window.showView = function (viewId, activeLinkId = null) {
+        // Toggle views
+        document.querySelectorAll('.admin-view').forEach(v => {
+            v.style.display = 'none';
+            v.classList.remove('active');
+        });
+
+        const targetView = document.getElementById(viewId);
+        if (targetView) {
+            targetView.style.display = 'block';
+            targetView.classList.add('active');
+        }
+
+        // Toggle sidebar links
+        document.querySelectorAll('.sidebar-nav li').forEach(li => li.classList.remove('active'));
+        if (activeLinkId) {
+            const link = document.getElementById(activeLinkId);
+            if (link) link.parentElement.classList.add('active');
+        }
+
+        // Close sidebar on mobile
+        if (sidebar && sidebar.classList.contains('active')) {
+            sidebar.classList.remove('active');
+        }
+    };
+
+    // SPA Navigation Logic
+    const navLinks = {
+        'nav-dashboard': 'view-dashboard',
+        'nav-services': 'view-services',
+        'nav-bookings': 'view-dashboard'
+    };
+
+    Object.keys(navLinks).forEach(id => {
+        const link = document.getElementById(id);
+        if (link) {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                showView(navLinks[id], id);
+            });
+        }
+    });
+
     // Protection check
     auth.onAuthStateChanged((user) => {
         const isIndex = window.location.pathname.includes('index.html');
@@ -85,6 +129,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (isIndex && user) {
             const adminData = JSON.parse(localStorage.getItem('zafiro_admin')) || { email: user.email };
             initDashboard(user, adminData);
+            loadServices(); // Always load services in background
+            initCloudinaryWidget(); // Init Cloudinary
         }
     });
 });
@@ -121,9 +167,17 @@ function initDashboard(user, adminData) {
         };
     }
 
+    // Make stats interactive (clickable shortcut)
+    const servicesCard = document.getElementById('stat-active-services')?.closest('.stat-card');
+    if (servicesCard) {
+        servicesCard.style.cursor = 'pointer';
+        servicesCard.onclick = () => showView('view-services', 'nav-services');
+    }
+
     loadBookings(adminData, revenueFilter ? revenueFilter.value : 'all');
 }
 
+// BOOKINGS LOGIC
 function loadBookings(adminData, currentFilter = 'all') {
     const tableBody = document.getElementById('bookings-table-body');
     if (!tableBody) return;
@@ -142,8 +196,6 @@ function loadBookings(adminData, currentFilter = 'all') {
 
         snapshot.forEach((doc) => {
             const data = doc.data();
-
-            // Map 'pending' to 'Reserva solicitada' for legacy data consistency
             let status = data.status || 'Reserva solicitada';
             if (status === 'pending') status = 'Reserva solicitada';
 
@@ -172,22 +224,17 @@ function loadBookings(adminData, currentFilter = 'all') {
                    </div>`
                 : `<strong>$${baseTotal.toLocaleString()}</strong>`;
 
-            let statusClass = "pending";
-            if (status === 'Reserva pagada') statusClass = "confirmed";
-            if (status === 'Experiencia realizada') statusClass = "complete";
-
             row.innerHTML = `
                 <td>${data.client || 'N/A'}</td>
                 <td>${data.service || 'N/A'}</td>
                 <td>${dateStr}</td>
                 <td>${totalHTML}</td>
-                <td><span class="status-badge ${statusClass}">${status}</span></td>
+                <td><span class="status-badge ${getStatusClass(status)}">${status}</span></td>
                 <td><button class="btn-action" onclick="viewDetails('${doc.id}')">Detalles</button></td>
             `;
             tableBody.appendChild(row);
         });
 
-        // Update Stats ONLY after the loop is done
         if (document.getElementById('stat-bookings-today')) document.getElementById('stat-bookings-today').innerText = todayCount;
         if (document.getElementById('stat-revenue-month')) {
             const revenueStr = monthlyRevenue >= 1000000
@@ -195,26 +242,258 @@ function loadBookings(adminData, currentFilter = 'all') {
                 : (monthlyRevenue >= 1000 ? `$${(monthlyRevenue / 1000).toFixed(1)}K` : `$${monthlyRevenue.toLocaleString()}`);
             document.getElementById('stat-revenue-month').innerText = revenueStr;
         }
-    }, (error) => {
-        console.error("Error en Snapshot:", error);
     });
 }
 
+// EXPERIENCES LOGIC
+window.toggleScheduleFields = function (type) {
+    const scheduleDiv = document.getElementById('partial-schedule');
+    if (scheduleDiv) {
+        scheduleDiv.style.display = type === 'partial' ? 'block' : 'none';
+    }
+}
+
+// Cloudinary Logic
+let uploadedImages = [];
+
+function initCloudinaryWidget() {
+    const btnUpload = document.getElementById('upload-widget');
+    if (!btnUpload) return;
+
+    const myWidget = cloudinary.createUploadWidget({
+        cloudName: 'dkp9hwxgs',
+        uploadPreset: 'zafiro_preset', // USER MUST STILL UPDATE THIS OR CREATE ONE WITH THIS NAME
+        multiple: true,
+        sources: ['local', 'url'],
+        styles: {
+            palette: {
+                window: '#000000',
+                windowBorder: '#d4af37',
+                tabIcon: '#d4af37',
+                menuIcons: '#d4af37',
+                textDark: '#000000',
+                textLight: '#FFFFFF',
+                link: '#d4af37',
+                action: '#d4af37',
+                inactiveTabIcon: '#E4E4E4',
+                error: '#F44235',
+                inProgress: '#d4af37',
+                complete: '#20B832',
+                sourceBg: '#000000'
+            }
+        }
+    }, (error, result) => {
+        if (error) {
+            console.error("Cloudinary Error:", error);
+            showToast('Error de Cloudinary: Configuración inválida o falla de red', 'error');
+            return;
+        }
+
+        if (result && result.event === "success") {
+            uploadedImages.push(result.info.secure_url);
+            renderImagePreviews();
+            showToast('Imagen subida correctamente', 'success');
+        } else if (result && result.event === "display-changed" && result.info === "closed") {
+            // Widget closed
+        }
+    });
+
+    btnUpload.addEventListener('click', () => myWidget.open(), false);
+}
+
+function renderImagePreviews() {
+    const gallery = document.getElementById('image-preview-gallery');
+    const inputHidden = document.getElementById('exp-images-json');
+    if (!gallery) return;
+
+    gallery.innerHTML = '';
+    uploadedImages.forEach((url, index) => {
+        const div = document.createElement('div');
+        div.style.position = 'relative';
+        div.style.width = '80px';
+        div.style.height = '80px';
+
+        div.innerHTML = `
+            <img src="${url}" style="width:100%; height:100%; object-fit:cover; border-radius:4px; border:1px solid rgba(212,175,55,0.3);">
+            <button type="button" onclick="removeImage(${index})" style="position:absolute; top:-5px; right:-5px; background:red; color:white; border:none; border-radius:50%; width:18px; height:18px; cursor:pointer; font-size:10px; display:flex; align-items:center; justify-content:center;">×</button>
+        `;
+        gallery.appendChild(div);
+    });
+
+    inputHidden.value = JSON.stringify(uploadedImages);
+}
+
+window.removeImage = function (index) {
+    uploadedImages.splice(index, 1);
+    renderImagePreviews();
+}
+
+function getStatusClass(status) {
+    if (status === 'Reserva pagada') return "confirmed";
+    if (status === 'Experiencia realizada') return "complete";
+    if (status === 'activo') return "confirmed";
+    if (status === 'inactivo') return "pending";
+    return "pending";
+}
+
+// EXPERIENCES LOGIC
+function loadServices() {
+    const tableBody = document.getElementById('services-table-body');
+    const statElement = document.getElementById('stat-active-services');
+    if (!tableBody) return;
+
+    db.collection('services').onSnapshot((snapshot) => {
+        console.log(`Zafiro Admin: Sincronizando experiencias (${snapshot.size} detectadas)`);
+        tableBody.innerHTML = '';
+
+        // Update stat count
+        if (statElement) {
+            statElement.innerText = snapshot.size;
+        }
+
+        if (snapshot.empty) {
+            tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 40px; color: var(--admin-text-muted);">No has creado ninguna experiencia aún. Haz clic en "+ Nueva Experiencia" para comenzar.</td></tr>';
+            return;
+        }
+
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            const row = document.createElement('tr');
+
+            // Defensive data check
+            const name = data.name || 'Sin nombre';
+            const price = data.price ? parseFloat(data.price).toLocaleString() : '0';
+            const type = data.type || 'N/A';
+            const status = data.status || 'activo';
+
+            row.innerHTML = `
+                <td><strong>${name}</strong></td>
+                <td><span class="badge" style="background:rgba(255,255,255,0.05)!important; color:white!important;">${type}</span></td>
+                <td>$${price}</td>
+                <td><span class="status-badge ${getStatusClass(status)}">${status}</span></td>
+                <td><button class="btn-action" onclick="editExperience('${doc.id}')">Editar</button></td>
+            `;
+            tableBody.appendChild(row);
+        });
+    }, (error) => {
+        console.error("Zafiro Error: Fallo en onSnapshot servicios:", error);
+    });
+}
+
+const experienceModal = document.getElementById('experience-modal');
+const expForm = document.getElementById('experience-form');
+
+function openExperienceModal() {
+    expForm.reset();
+    document.getElementById('experience-id').value = '';
+    document.getElementById('btn-delete-experience').style.display = 'none';
+    uploadedImages = [];
+    renderImagePreviews();
+    toggleScheduleFields('full');
+    experienceModal.style.display = 'flex';
+}
+
+function editExperience(id) {
+    db.collection('services').doc(id).get().then(doc => {
+        if (doc.exists) {
+            const data = doc.data();
+            document.getElementById('experience-id').value = id;
+            document.getElementById('exp-name').value = data.name;
+            document.getElementById('exp-type').value = data.type;
+            document.getElementById('exp-price').value = data.price;
+            document.getElementById('exp-status').value = data.status || 'activo';
+            document.getElementById('exp-desc').value = data.description || '';
+
+            // Availability
+            if (data.type === 'partial' && data.availability) {
+                document.getElementById('exp-start-time').value = data.availability.startTime || '08:00';
+                document.getElementById('exp-end-time').value = data.availability.endTime || '17:00';
+            }
+            toggleScheduleFields(data.type);
+
+            // Images
+            uploadedImages = data.images || (data.image ? [data.image] : []);
+            renderImagePreviews();
+
+            document.getElementById('btn-delete-experience').style.display = 'inline-block';
+            experienceModal.style.display = 'flex';
+        }
+    });
+}
+
+if (expForm) {
+    expForm.onsubmit = async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('experience-id').value;
+        const type = document.getElementById('exp-type').value;
+        const priceValue = document.getElementById('exp-price').value;
+
+        // Validation
+        if (!priceValue || isNaN(parseFloat(priceValue))) {
+            showToast('Por favor ingresa un precio válido', 'error');
+            return;
+        }
+
+        const data = {
+            name: document.getElementById('exp-name').value,
+            type: type,
+            price: parseFloat(priceValue),
+            status: document.getElementById('exp-status').value,
+            images: uploadedImages,
+            image: uploadedImages.length > 0 ? uploadedImages[0] : '', // Keep .image for legacy compat
+            description: document.getElementById('exp-desc').value,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        if (type === 'partial') {
+            data.availability = {
+                startTime: document.getElementById('exp-start-time').value,
+                endTime: document.getElementById('exp-end-time').value
+            };
+        }
+
+        try {
+            if (id) {
+                await db.collection('services').doc(id).update(data);
+                showToast('Experiencia actualizada con éxito', 'success');
+            } else {
+                data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                await db.collection('services').add(data);
+                showToast('Experiencia creada con éxito', 'success');
+            }
+            experienceModal.style.display = 'none';
+        } catch (error) {
+            console.error("Zafiro Error al guardar experiencia:", error);
+            showToast('Error al guardar en el servidor: ' + error.message, 'error');
+        }
+    };
+}
+
+document.getElementById('btn-delete-experience').onclick = async () => {
+    const id = document.getElementById('experience-id').value;
+    if (id && confirm('¿Estás seguro de eliminar esta experiencia?')) {
+        try {
+            await db.collection('services').doc(id).delete();
+            showToast('Experiencia eliminada', 'success');
+            experienceModal.style.display = 'none';
+        } catch (error) {
+            showToast('Error: ' + error.message, 'error');
+        }
+    }
+};
+
+document.getElementById('close-experience-modal').onclick = () => experienceModal.style.display = 'none';
+
+// Modals generic close
 const detailsModal = document.getElementById('details-modal');
 const closeDetails = document.getElementById('close-details');
-const editForm = document.getElementById('edit-booking-form');
-const btnDelete = document.getElementById('btn-delete-booking');
 
 function viewDetails(id) {
     db.collection('bookings').doc(id).get().then((doc) => {
         if (doc.exists) {
             const data = doc.data();
-
-            // Map legacy statuses for the modal selector
             let status = data.status || 'Reserva solicitada';
-            if (status === 'pending' || status === 'confirmed' || status === 'cancelled') {
-                status = 'Reserva solicitada'; // Default legacy to first new status
-            }
+            if (status === 'pending' || status === 'confirmed' || status === 'cancelled') status = 'Reserva solicitada';
 
             document.getElementById('edit-id').value = id;
             document.getElementById('edit-client').value = data.client || '';
@@ -224,16 +503,23 @@ function viewDetails(id) {
             document.getElementById('edit-total').value = data.total || 0;
             detailsModal.style.display = 'flex';
         }
-    }).catch(error => showToast('Error: ' + error.message, 'error'));
+    });
 }
 
 if (closeDetails) closeDetails.onclick = () => detailsModal.style.display = 'none';
 
-if (editForm) {
-    editForm.onsubmit = async (e) => {
+window.onclick = (e) => {
+    if (e.target == detailsModal) detailsModal.style.display = 'none';
+    if (e.target == experienceModal) experienceModal.style.display = 'none';
+};
+
+// Booking update/delete
+const editBookingForm = document.getElementById('edit-booking-form');
+if (editBookingForm) {
+    editBookingForm.onsubmit = async (e) => {
         e.preventDefault();
         const id = document.getElementById('edit-id').value;
-        const updatedData = {
+        const data = {
             client: document.getElementById('edit-client').value,
             whatsapp: document.getElementById('edit-whatsapp').value,
             service: document.getElementById('edit-service').value,
@@ -241,8 +527,8 @@ if (editForm) {
             total: parseFloat(document.getElementById('edit-total').value)
         };
         try {
-            await db.collection('bookings').doc(id).update(updatedData);
-            showToast('Actualizado', 'success');
+            await db.collection('bookings').doc(id).update(data);
+            showToast('Reserva actualizada', 'success');
             detailsModal.style.display = 'none';
         } catch (error) {
             showToast('Error: ' + error.message, 'error');
@@ -250,15 +536,14 @@ if (editForm) {
     };
 }
 
-if (btnDelete) {
-    btnDelete.onclick = async () => {
+const btnDeleteBooking = document.getElementById('btn-delete-booking');
+if (btnDeleteBooking) {
+    btnDeleteBooking.onclick = async () => {
         const id = document.getElementById('edit-id').value;
-        if (confirm('¿Eliminar reserva?')) {
+        if (id && confirm('¿Borrar reserva?')) {
             try {
-                // IMPORTANT: When deleting, we also notify the UI immediately
-                // Firestore onSnapshot will handle the table update.
                 await db.collection('bookings').doc(id).delete();
-                showToast('Eliminada', 'success');
+                showToast('Reserva eliminada', 'success');
                 detailsModal.style.display = 'none';
             } catch (error) {
                 showToast('Error: ' + error.message, 'error');
@@ -266,7 +551,3 @@ if (btnDelete) {
         }
     };
 }
-
-window.onclick = (event) => {
-    if (event.target == detailsModal) detailsModal.style.display = 'none';
-};

@@ -60,39 +60,10 @@
         <div class="container">
             <h2 class="section-title">Nuestras Experiencias</h2>
             <div id="services-grid" class="grid">
-                <!-- Service 1 -->
-                <div class="card" data-id="1" data-type="full" data-price="3500000" data-name="Yate Diamante Real">
-                    <div class="card-img" style="background-image: url('./img/catamaran1.png');">
-                    </div>
-                    <div class="card-body">
-                        <h3>Yate Diamante Real</h3>
-                        <p>La máxima expresión del lujo. 60 pies de elegancia, tripulación completa y servicio VIP.</p>
-                        <div class="price">Desde $3,500,000 / día</div>
-                        <button class="btn-reserve">Reservar Ahora</button>
-                    </div>
-                </div>
-                <!-- Service 2 -->
-                <div class="card" data-id="2" data-type="partial" data-price="650000"
-                    data-name="Lancha Deportiva Zafiro">
-                    <div class="card-img" style="background-image: url('./img/yate1.png');">
-                    </div>
-                    <div class="card-body">
-                        <h3>Lancha Deportiva Zafiro</h3>
-                        <p>Perfecta para planes rápidos y llenos de adrenalina hacia las Islas del Rosario.</p>
-                        <div class="price">Desde $650,000 / hora</div>
-                        <button class="btn-reserve">Reservar Ahora</button>
-                    </div>
-                </div>
-                <!-- Service 3 -->
-                <div class="card" data-id="3" data-type="full" data-price="2800000" data-name="Catamarán Aurora">
-                    <div class="card-img" style="background-image: url('./img/lancha1.png');">
-                    </div>
-                    <div class="card-body">
-                        <h3>Catamarán Aurora</h3>
-                        <p>Estabilidad y espacio. Ideal para atardeceres mágicos y grupos de hasta 15 personas.</p>
-                        <div class="price">Desde $2,800,000 / día</div>
-                        <button class="btn-reserve">Reservar Ahora</button>
-                    </div>
+                <!-- Carga dinámica desde Firestore -->
+                <div class="loading-services"
+                    style="grid-column: 1/-1; text-align: center; padding: 50px; color: var(--gold);">
+                    <p>Cargando experiencias exclusivas...</p>
                 </div>
             </div>
         </div>
@@ -250,6 +221,17 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="js/firebase-config.js"></script>
+    <!-- Gallery Modal (Lightbox) -->
+    <div id="gallery-modal" class="modal gallery-modal">
+        <span class="close-gallery">&times;</span>
+        <button class="gallery-nav prev" id="btn-gallery-prev">&#10094;</button>
+        <div class="gallery-viewport">
+            <div id="gallery-images-container"></div>
+        </div>
+        <button class="gallery-nav next" id="btn-gallery-next">&#10095;</button>
+        <div class="gallery-counter"><span id="current-img">1</span> / <span id="total-imgs">1</span></div>
+    </div>
+
     <script src="js/app.js"></script>
 </body>
 
